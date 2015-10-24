@@ -17,13 +17,20 @@ import (
 // view and test certificates localy
 // openssl x509 -in ca.pem -text
 // openssl verify -verbose -CAfile ca.pem client.pem
-func main() {
-	ca := createCertificateTemplate(true, []byte{1, 2, 3, 4, 5, 6}, []string{}, "SE", "test", "WebCA", "")
 
-	caPriv, _ := rsa.GenerateKey(rand.Reader, 1024) // use small key so generation is fast
+type certificate struct {
+	Country            string
+	Organization       string
+	OrganizationalUnit string
+	CommonName         string
+	AlternativeNames   []string
+	CA                 bool
+	SubjectKey         []byte
+}
+
+func main() {
+	ca, caPriv := createCA()
 	caPub := &caPriv.PublicKey
-	writePrivateKeyToPemFile(caPriv, "ca_private_key.pem")
-	writePublicKeyToPemFile(caPub, "ca_public_key.pem")
 	caBytes, err := x509.CreateCertificate(rand.Reader, ca, ca, caPub, caPriv)
 	if err != nil {
 		log.Println("create ca failed", err)
@@ -31,12 +38,9 @@ func main() {
 	}
 	writePemToFile(caBytes, "ca.pem")
 	// test to use a certificate that is not allowed to sign as a sign certificate, checkCertificate must fail
-	//interCa := createCertificateTemplate(false, []byte{1, 2, 6}, []string{}, "SE", "test", "webInterCA", "")
-	interCa := createCertificateTemplate(true, []byte{1, 2, 6}, []string{}, "SE", "test", "webInterCA", "")
-	interCaPriv, _ := rsa.GenerateKey(rand.Reader, 1024)
+	// set CA to false for this check on inteCA cert
+	interCa, interCaPriv := createInterCA()
 	interCaPub := &interCaPriv.PublicKey
-	writePrivateKeyToPemFile(interCaPriv, "interCa_private_key.pem")
-	writePublicKeyToPemFile(interCaPub, "interCa_public_key.pem")
 	interCaBytes, err := x509.CreateCertificate(rand.Reader, interCa, ca, interCaPub, caPriv)
 	if err != nil {
 		log.Println("create interCa failed", err)
@@ -44,11 +48,8 @@ func main() {
 	}
 	writePemToFile(interCaBytes, "interCa.pem")
 
-	client := createCertificateTemplate(false, []byte{1, 6}, []string{"www.foo.se", "www.bar.se"}, "SE", "test", "web", "www.baz.se")
-	clientPriv, _ := rsa.GenerateKey(rand.Reader, 1024)
+	client, clientPriv := createClient()
 	clientPub := &clientPriv.PublicKey
-	writePrivateKeyToPemFile(clientPriv, "client_private_key.pem")
-	writePublicKeyToPemFile(clientPub, "client_public_key.pem")
 	clientBytes, err := x509.CreateCertificate(rand.Reader, client, interCa, clientPub, interCaPriv)
 	if err != nil {
 		log.Println("create client failed", err)
@@ -58,30 +59,80 @@ func main() {
 	checkCertificate(caBytes, interCaBytes, clientBytes)
 }
 
-func createCertificateTemplate(ca bool, subjectKey []byte, dnsName []string, country, org, orgUnit, cn string) *x509.Certificate {
-	extKeyUsage := getExtKeyUsage(ca)
-	keyUsage := getKeyUsage(ca)
+func createCA() (*x509.Certificate, *rsa.PrivateKey) {
+	caData := certificate{
+		Country:            "SE",
+		Organization:       "test",
+		OrganizationalUnit: "WebCA",
+		CA:                 true,
+		SubjectKey:         []byte{1, 2, 3, 4, 5, 6},
+	}
+
+	caPriv, _ := rsa.GenerateKey(rand.Reader, 1024) // use small key so generation is fast
+	caPub := &caPriv.PublicKey
+	writePrivateKeyToPemFile(caPriv, "ca_private_key.pem")
+	writePublicKeyToPemFile(caPub, "ca_public_key.pem")
+	return createCertificateTemplate(caData), caPriv
+}
+
+func createInterCA() (*x509.Certificate, *rsa.PrivateKey) {
+	interCaData := certificate{
+		Country:            "SE",
+		Organization:       "test",
+		OrganizationalUnit: "WebInterCA",
+		CA:                 true,
+		SubjectKey:         []byte{1, 2, 3},
+	}
+	interCaPriv, _ := rsa.GenerateKey(rand.Reader, 1024)
+	interCaPub := &interCaPriv.PublicKey
+	writePrivateKeyToPemFile(interCaPriv, "interCa_private_key.pem")
+	writePublicKeyToPemFile(interCaPub, "interCa_public_key.pem")
+	return createCertificateTemplate(interCaData), interCaPriv
+}
+
+func createClient() (*x509.Certificate, *rsa.PrivateKey) {
+	clientData := certificate{
+		Country:            "SE",
+		Organization:       "test",
+		OrganizationalUnit: "Web",
+		CA:                 false,
+		SubjectKey:         []byte{1, 6},
+		CommonName:         "www.baz.se",
+		AlternativeNames:   []string{"www.foo.se", "www.bar.se"},
+	}
+	clientPriv, _ := rsa.GenerateKey(rand.Reader, 1024)
+	clientPub := &clientPriv.PublicKey
+	writePrivateKeyToPemFile(clientPriv, "client_private_key.pem")
+	writePublicKeyToPemFile(clientPub, "client_public_key.pem")
+	return createCertificateTemplate(clientData), clientPriv
+}
+
+func createCertificateTemplate(data certificate) *x509.Certificate {
+	extKeyUsage := getExtKeyUsage(data.CA)
+	keyUsage := getKeyUsage(data.CA)
 
 	cert := &x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
-			Country:            []string{country},
-			Organization:       []string{org},
-			OrganizationalUnit: []string{orgUnit},
+			Country:            []string{data.Country},
+			Organization:       []string{data.Organization},
+			OrganizationalUnit: []string{data.OrganizationalUnit},
 		},
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(1, 0, 0),
-		SubjectKeyId:          subjectKey,
+		SubjectKeyId:          data.SubjectKey,
 		BasicConstraintsValid: true,
 		SignatureAlgorithm:    x509.SHA256WithRSA,
-		IsCA:                  ca,
+		IsCA:                  data.CA,
 		ExtKeyUsage:           extKeyUsage,
 		KeyUsage:              keyUsage,
 	}
 
-	if !ca {
-		cert.Subject.CommonName = cn
-		cert.DNSNames = dnsName
+	if data.CommonName != "" {
+		cert.Subject.CommonName = data.CommonName
+	}
+	if len(data.AlternativeNames) > 0 {
+		cert.DNSNames = data.AlternativeNames
 	}
 	return cert
 }
