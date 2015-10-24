@@ -30,19 +30,32 @@ func main() {
 		return
 	}
 	writePemToFile(caBytes, "ca.pem")
+	// test to use a certificate that is not allowed to sign as a sign certificate, checkCertificate must fail
+	//interCa := createCertificateTemplate(false, []byte{1, 2, 6}, []string{}, "SE", "test", "webInterCA", "")
+	interCa := createCertificateTemplate(true, []byte{1, 2, 6}, []string{}, "SE", "test", "webInterCA", "")
+	interCaPriv, _ := rsa.GenerateKey(rand.Reader, 1024)
+	interCaPub := &interCaPriv.PublicKey
+	writePrivateKeyToPemFile(interCaPriv, "interCa_private_key.pem")
+	writePublicKeyToPemFile(interCaPub, "interCa_public_key.pem")
+	interCaBytes, err := x509.CreateCertificate(rand.Reader, interCa, ca, interCaPub, caPriv)
+	if err != nil {
+		log.Println("create interCa failed", err)
+		return
+	}
+	writePemToFile(interCaBytes, "interCa.pem")
 
 	client := createCertificateTemplate(false, []byte{1, 6}, []string{"www.foo.se", "www.bar.se"}, "SE", "test", "web", "www.baz.se")
 	clientPriv, _ := rsa.GenerateKey(rand.Reader, 1024)
 	clientPub := &clientPriv.PublicKey
 	writePrivateKeyToPemFile(clientPriv, "client_private_key.pem")
 	writePublicKeyToPemFile(clientPub, "client_public_key.pem")
-	clientBytes, err := x509.CreateCertificate(rand.Reader, client, ca, clientPub, caPriv)
+	clientBytes, err := x509.CreateCertificate(rand.Reader, client, interCa, clientPub, interCaPriv)
 	if err != nil {
 		log.Println("create client failed", err)
 		return
 	}
 	writePemToFile(clientBytes, "client.pem")
-
+	checkCertificate(caBytes, interCaBytes, clientBytes)
 }
 
 func createCertificateTemplate(ca bool, subjectKey []byte, dnsName []string, country, org, orgUnit, cn string) *x509.Certificate {
@@ -60,9 +73,10 @@ func createCertificateTemplate(ca bool, subjectKey []byte, dnsName []string, cou
 		NotAfter:              time.Now().AddDate(1, 0, 0),
 		SubjectKeyId:          subjectKey,
 		BasicConstraintsValid: true,
-		IsCA:        ca,
-		ExtKeyUsage: extKeyUsage,
-		KeyUsage:    keyUsage,
+		SignatureAlgorithm:    x509.SHA256WithRSA,
+		IsCA:                  ca,
+		ExtKeyUsage:           extKeyUsage,
+		KeyUsage:              keyUsage,
 	}
 
 	if !ca {
@@ -72,6 +86,24 @@ func createCertificateTemplate(ca bool, subjectKey []byte, dnsName []string, cou
 	return cert
 }
 
+func checkCertificate(caBytes, interCaBytes, clientBytes []byte) {
+	rootPool := x509.NewCertPool()
+	rootCert, _ := x509.ParseCertificate(caBytes)
+	rootPool.AddCert(rootCert)
+	interCaPool := x509.NewCertPool()
+	interCerts, _ := x509.ParseCertificates(interCaBytes)
+	for _, cert := range interCerts {
+		interCaPool.AddCert(cert)
+	}
+	opts := x509.VerifyOptions{Roots: rootPool, Intermediates: interCaPool}
+	clientCert, _ := x509.ParseCertificate(clientBytes)
+	_, certErr := clientCert.Verify(opts)
+	if certErr != nil {
+		log.Println(certErr)
+		os.Exit(1)
+	}
+	log.Println("Certificates verify: OK")
+}
 func getKeyUsage(ca bool) x509.KeyUsage {
 	if ca {
 		return x509.KeyUsageCRLSign | x509.KeyUsageCertSign
