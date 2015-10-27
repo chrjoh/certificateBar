@@ -1,0 +1,41 @@
+certificates:
+  - certificate: 
+      id: mainca
+      parent: mainca
+      ca: true
+      pkix:
+        commonname: www.foo.se
+        country: SE
+        organization: test
+        organizationunit: testca
+      keytype: RSA
+      keylength: 1024
+      hashalg: SHA2
+  - certificate: 
+      id: interca
+      parent: mainca
+      ca: true
+      pkix:
+        commonname: www.bar.se
+        country: SE
+        organization: test
+        organizationunit: testinterca
+      keytype: RSA
+      keylength: 1024
+      hashalg: SHA2
+  - certificate: 
+      id: client
+      parent: interca
+      ca: false
+      pkix:
+        commonname: www.baz.se
+        country: SE
+        organization: test
+        organizationunit: testweb
+      keytype: RSA
+      keylength: 1024
+      hashalg: SHA2
+      altnames: 
+        - www.dront.se 
+        - www.fro.se
+
