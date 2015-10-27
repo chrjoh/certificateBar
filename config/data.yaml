@@ -37,5 +37,5 @@ certificates:
       hashalg: SHA2
       altnames: 
         - www.dront.se 
-        - www.fro.se
+        - www.fro.se 
 

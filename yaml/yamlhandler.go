@@ -1,6 +1,7 @@
 package yaml
 
 import (
+	"crypto/rsa"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -9,17 +10,13 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-//var data = `
-//ca: true
-//pix:
-//  commonname: www.foo.se
-//  country: SE
-//`
-
 type PkixData struct {
-	CommonName string `yaml:"commonname"`
-	Country    string `yaml:"country"`
+	CommonName       string `yaml:"commonname"`
+	Country          string `yaml:"country"`
+	Organization     string `yaml:"organization"`
+	OrganizationUnit string `yaml:"organizationunit"`
 }
+
 type Data struct {
 	Id        string   `yaml:"id"`
 	CA        bool     `yaml:"ca"`
@@ -30,9 +27,12 @@ type Data struct {
 	AltNames  []string `yaml:"altnames"`
 	Pkix      PkixData `yaml:"pkix"`
 }
+
 type Cert struct {
 	Certificate Data `yaml:"certificate"`
+	PrivateKey  rsa.PrivateKey
 }
+
 type Certs struct {
 	Certificates []Cert `yaml:"certificates"`
 }
@@ -46,18 +46,6 @@ func Handler() {
 	}
 	fmt.Printf("--- test:\n%v\n\n", test)
 	fmt.Printf("country: %s\n", test.Certificates[2].Certificate.AltNames)
-	test2 := Data{
-		CA: false,
-		Pkix: PkixData{
-			CommonName: "www.foo.se",
-			Country:    "SE",
-		},
-	}
-	d, err := yaml.Marshal(&test2)
-	if err != nil {
-		log.Fatalf("error: %v", err)
-	}
-	fmt.Printf("--- test2 dump:\n%s\n\n", string(d))
 
 }
 
