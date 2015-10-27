@@ -2,6 +2,7 @@ package yaml
 
 import (
 	"crypto/rsa"
+	"crypto/x509"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -17,7 +18,7 @@ type PkixData struct {
 	OrganizationUnit string `yaml:"organizationunit"`
 }
 
-type Data struct {
+type CertData struct {
 	Id        string   `yaml:"id"`
 	CA        bool     `yaml:"ca"`
 	Parent    string   `yaml:"parent"`
@@ -29,8 +30,10 @@ type Data struct {
 }
 
 type Cert struct {
-	Certificate Data `yaml:"certificate"`
-	PrivateKey  rsa.PrivateKey
+	CertConfig   CertData `yaml:"certificate"`
+	PrivateKey   rsa.PrivateKey
+	CertTemplate x509.Certificate
+	CertBytes    []byte
 }
 
 type Certs struct {
@@ -45,7 +48,7 @@ func Handler() {
 		log.Fatalf("error: %v", err)
 	}
 	fmt.Printf("--- test:\n%v\n\n", test)
-	fmt.Printf("country: %s\n", test.Certificates[2].Certificate.AltNames)
+	fmt.Printf("country: %s\n", test.Certificates[2].CertConfig.AltNames)
 
 }
 
