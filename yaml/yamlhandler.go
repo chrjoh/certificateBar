@@ -31,13 +31,16 @@ type CertData struct {
 
 type Cert struct {
 	CertConfig   CertData `yaml:"certificate"`
+	signed       bool
+	toBeUsed     bool
 	PrivateKey   rsa.PrivateKey
 	CertTemplate x509.Certificate
 	CertBytes    []byte
 }
 
 type Certs struct {
-	Certificates []Cert `yaml:"certificates"`
+	Certificates []*Cert `yaml:"certificates"`
+	Chain        map[string][]string
 }
 
 func Handler() {
@@ -47,9 +50,62 @@ func Handler() {
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
-	fmt.Printf("--- test:\n%v\n\n", test)
-	fmt.Printf("country: %s\n", test.Certificates[2].CertConfig.AltNames)
+	test.setupSigner()
+	test.sign()
+	//	fmt.Printf("--- test:\n%v\n\n", test)
 
+}
+func (c *Certs) setupSigner() {
+	c.Chain = make(map[string][]string)
+	for _, val := range c.Certificates {
+		key := val.CertConfig.Parent
+		id := val.CertConfig.Id
+		if key == id {
+			val.signed = true // perform selfSign
+		} else if c.Chain[key] == nil {
+			c.Chain[key] = []string{id}
+		} else {
+			c.Chain[key] = append(c.Chain[key], id)
+		}
+	}
+}
+
+func (c *Certs) sign() {
+	for {
+		sign := signers(c)
+		if len(sign) == 0 {
+			break
+		}
+		for _, s := range sign {
+			list := c.Chain[s.CertConfig.Id]
+			for _, certId := range list {
+				fmt.Printf("%v is Sign: %s\n", s.CertConfig.Id, certId)
+				for _, cert := range c.Certificates {
+					if cert.CertConfig.Id == certId {
+						// sign certificate method
+						cert.signed = true
+						break
+					}
+				}
+			}
+		}
+	}
+	for _, cert := range c.Certificates {
+		if !cert.signed {
+			fmt.Printf("Failed to sign: %s\n", cert.CertConfig.Id)
+		}
+	}
+}
+
+func signers(c *Certs) []*Cert {
+	sign := []*Cert{}
+	for _, val := range c.Certificates {
+		if val.signed && !val.toBeUsed {
+			sign = append(sign, val)
+			val.toBeUsed = true
+		}
+	}
+	return sign
 }
 
 func ReadFile(name string) []byte {
