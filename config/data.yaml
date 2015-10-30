@@ -38,7 +38,7 @@ certificates:
   - certificate: 
       id: interca3
       parent: interca2
-      ca: true
+      ca: true 
       pkix:
         commonname: www.bar2.se
         country: SE

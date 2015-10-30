@@ -1,8 +1,6 @@
-package yaml
+package assembler
 
 import (
-	"crypto/rsa"
-	"crypto/x509"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -11,39 +9,6 @@ import (
 
 	"gopkg.in/yaml.v2"
 )
-
-type PkixData struct {
-	CommonName       string `yaml:"commonname"`
-	Country          string `yaml:"country"`
-	Organization     string `yaml:"organization"`
-	OrganizationUnit string `yaml:"organizationunit"`
-}
-
-type CertData struct {
-	Id        string   `yaml:"id"`
-	CA        bool     `yaml:"ca"`
-	Parent    string   `yaml:"parent"`
-	KeyType   string   `yaml:"keytype"`
-	KeyLength int      `yaml:"keylength"`
-	HashAlg   string   `yaml:"hashalg"`
-	AltNames  []string `yaml:"altnames"`
-	Pkix      PkixData `yaml:"pkix"`
-}
-
-type Cert struct {
-	CertConfig   CertData `yaml:"certificate"`
-	signed       bool
-	toBeUsed     bool
-	PrivateKey   rsa.PrivateKey
-	CertTemplate x509.Certificate
-	CertBytes    []byte
-	Signers      []string
-}
-
-type Certs struct {
-	Certificates []*Cert `yaml:"certificates"`
-	certSigners  map[string][]string
-}
 
 func Handler() {
 	test := Certs{}
@@ -85,7 +50,7 @@ func (c *Certs) signAll() {
 				fmt.Printf("%v is Sign: %s\n", id, certId)
 				for _, cert := range c.Certificates {
 					if cert.CertConfig.Id == certId {
-						// sign certificate method
+						// use s to sign certificate
 						cert.signed = true
 						if s.Signers == nil {
 							cert.Signers = []string{id}
@@ -111,7 +76,7 @@ func (c *Certs) signAll() {
 func findSigners(c *Certs) []*Cert {
 	sign := []*Cert{}
 	for _, val := range c.Certificates {
-		if val.signed && !val.toBeUsed {
+		if val.signed && !val.toBeUsed && val.CertConfig.CA {
 			sign = append(sign, val)
 			val.toBeUsed = true
 		}
