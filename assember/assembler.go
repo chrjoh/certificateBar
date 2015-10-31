@@ -104,8 +104,10 @@ func (c *Certs) signAll() {
 		}
 	}
 	for _, cert := range c.Certificates {
-		if len(cert.Signers) > 0 {
+		if cert.signed {
 			certificate.WritePemToFile(cert.CertBytes, cert.CertConfig.Id+".pem")
+		}
+		if len(cert.Signers) > 0 {
 			fmt.Printf("Cert: %s, has certificate chain: %v\n", cert.CertConfig.Id, strings.Join(cert.Signers, ", "))
 		}
 		if !cert.signed {
