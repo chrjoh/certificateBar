@@ -24,6 +24,7 @@ func PublicKey(privateKey interface{}) interface{} {
 	}
 }
 
+// TODO: use struct for this so that we do not have unused arguments
 func GenerateKey(keyType string, rsaBitLength int) interface{} {
 	var privateKey interface{}
 	var err error

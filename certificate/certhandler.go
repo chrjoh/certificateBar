@@ -70,7 +70,7 @@ func createCA() (*x509.Certificate, interface{}) {
 		SubjectKey:         []byte{1, 2, 3, 4, 5, 6},
 	}
 
-	caPriv := key.GenerateKey("RSA", 1024) // use small key so generation is fast
+	caPriv := key.GenerateKey("P224", 0) // use small key so generation is fast
 	caPub := key.PublicKey(caPriv)
 	key.WritePrivateKeyToPemFile(caPriv, "ca_private_key.pem")
 	key.WritePublicKeyToPemFile(caPub, "ca_public_key.pem")
@@ -124,10 +124,11 @@ func createCertificateTemplate(data certificate) *x509.Certificate {
 		NotAfter:              time.Now().AddDate(1, 0, 0),
 		SubjectKeyId:          data.SubjectKey,
 		BasicConstraintsValid: true,
-		SignatureAlgorithm:    x509.SHA256WithRSA,
-		IsCA:                  data.CA,
-		ExtKeyUsage:           extKeyUsage,
-		KeyUsage:              keyUsage,
+		// need to use different sig. alg for different key types
+		//		SignatureAlgorithm:    x509.SHA256WithRSA,
+		IsCA:        data.CA,
+		ExtKeyUsage: extKeyUsage,
+		KeyUsage:    keyUsage,
 	}
 
 	if data.CommonName != "" {
