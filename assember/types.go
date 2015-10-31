@@ -1,9 +1,6 @@
 package assembler
 
-import (
-	"crypto/rsa"
-	"crypto/x509"
-)
+import "crypto/x509"
 
 type PkixData struct {
 	CommonName       string `yaml:"commonname"`
@@ -27,8 +24,8 @@ type Cert struct {
 	CertConfig   CertData `yaml:"certificate"`
 	signed       bool
 	toBeUsed     bool
-	PrivateKey   rsa.PrivateKey
-	CertTemplate x509.Certificate
+	PrivateKey   interface{}
+	CertTemplate *x509.Certificate
 	CertBytes    []byte
 	Signers      []string
 }

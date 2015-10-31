@@ -19,7 +19,7 @@ import (
 // openssl x509 -in ca.pem -text
 // openssl verify -verbose -CAfile ca.pem client.pem
 
-type certificate struct {
+type Certificate struct {
 	Country            string
 	Organization       string
 	OrganizationalUnit string
@@ -61,8 +61,17 @@ func Handler() {
 	checkCertificate(caBytes, interCaBytes, clientBytes)
 }
 
+func Sign(cert *x509.Certificate, signer *x509.Certificate, certPubKey, signerPrivateKey interface{}) []byte {
+	derBytes, err := x509.CreateCertificate(rand.Reader, cert, signer, certPubKey, signerPrivateKey)
+	if err != nil {
+		log.Println(err)
+		log.Fatalf("Failed to sign cetificate: %v\n", cert.Subject)
+	}
+	return derBytes
+}
+
 func createCA() (*x509.Certificate, interface{}) {
-	caData := certificate{
+	caData := Certificate{
 		Country:            "SE",
 		Organization:       "test",
 		OrganizationalUnit: "WebCA",
@@ -74,11 +83,11 @@ func createCA() (*x509.Certificate, interface{}) {
 	caPub := key.PublicKey(caPriv)
 	key.WritePrivateKeyToPemFile(caPriv, "ca_private_key.pem")
 	key.WritePublicKeyToPemFile(caPub, "ca_public_key.pem")
-	return createCertificateTemplate(caData), caPriv
+	return CreateCertificateTemplate(caData), caPriv
 }
 
 func createInterCA() (*x509.Certificate, interface{}) {
-	interCaData := certificate{
+	interCaData := Certificate{
 		Country:            "SE",
 		Organization:       "test",
 		OrganizationalUnit: "WebInterCA",
@@ -89,27 +98,31 @@ func createInterCA() (*x509.Certificate, interface{}) {
 	interCaPub := key.PublicKey(interCaPriv)
 	key.WritePrivateKeyToPemFile(interCaPriv, "interCa_private_key.pem")
 	key.WritePublicKeyToPemFile(interCaPub, "interCa_public_key.pem")
-	return createCertificateTemplate(interCaData), interCaPriv
+	return CreateCertificateTemplate(interCaData), interCaPriv
 }
 
+// NOTE:
+//If an SSL certificate has a Subject Alternative Name (SAN) field, then SSL clients are supposed to ignore
+//the common name value and seek a match in the SAN list.
+//This is why the Cert always repeats the common name as the first SAN in the certificate.
 func createClient() (*x509.Certificate, interface{}) {
-	clientData := certificate{
+	clientData := Certificate{
 		Country:            "SE",
 		Organization:       "test",
 		OrganizationalUnit: "Web",
 		CA:                 false,
 		SubjectKey:         []byte{1, 6},
 		CommonName:         "www.baz.se",
-		AlternativeNames:   []string{"www.foo.se", "www.bar.se"},
+		AlternativeNames:   []string{"www.baz.se", "www.foo.se", "www.bar.se"},
 	}
 	clientPriv := key.GenerateKey("RSA", 1024)
 	clientPub := key.PublicKey(clientPriv)
 	key.WritePrivateKeyToPemFile(clientPriv, "client_private_key.pem")
 	key.WritePublicKeyToPemFile(clientPub, "client_public_key.pem")
-	return createCertificateTemplate(clientData), clientPriv
+	return CreateCertificateTemplate(clientData), clientPriv
 }
 
-func createCertificateTemplate(data certificate) *x509.Certificate {
+func CreateCertificateTemplate(data Certificate) *x509.Certificate {
 	extKeyUsage := getExtKeyUsage(data.CA)
 	keyUsage := getKeyUsage(data.CA)
 
@@ -149,7 +162,11 @@ func checkCertificate(caBytes, interCaBytes, clientBytes []byte) {
 	for _, cert := range interCerts {
 		interCaPool.AddCert(cert)
 	}
-	opts := x509.VerifyOptions{Roots: rootPool, Intermediates: interCaPool}
+	opts := x509.VerifyOptions{
+		DNSName:       "www.baz.se",
+		Roots:         rootPool,
+		Intermediates: interCaPool,
+	}
 	clientCert, _ := x509.ParseCertificate(clientBytes)
 	_, certErr := clientCert.Verify(opts)
 	if certErr != nil {

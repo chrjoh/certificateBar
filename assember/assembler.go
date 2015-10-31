@@ -7,6 +7,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/chrjoh/certificateBar/certificate"
+	"github.com/chrjoh/certificateBar/key"
+
 	"gopkg.in/yaml.v2"
 )
 
@@ -17,6 +20,8 @@ func Handler() {
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
+	test.setupKeys()
+	test.setupTemplates()
 	test.setupSigner()
 	test.signAll()
 	//	fmt.Printf("--- test:\n%v\n\n", test)
@@ -25,15 +30,39 @@ func Handler() {
 func (c *Certs) setupSigner() {
 	c.certSigners = make(map[string][]string)
 	for _, val := range c.Certificates {
-		key := val.CertConfig.Parent
+		parent := val.CertConfig.Parent
 		id := val.CertConfig.Id
-		if key == id {
-			val.signed = true // perform selfSign
-		} else if c.certSigners[key] == nil {
-			c.certSigners[key] = []string{id}
+		if parent == id {
+			privKey := val.PrivateKey
+			// self signed certificate
+			val.CertBytes = certificate.Sign(val.CertTemplate, val.CertTemplate, key.PublicKey(privKey), privKey)
+			val.signed = true
+		} else if c.certSigners[parent] == nil {
+			c.certSigners[parent] = []string{id}
 		} else {
-			c.certSigners[key] = append(c.certSigners[key], id)
+			c.certSigners[parent] = append(c.certSigners[parent], id)
 		}
+	}
+}
+
+func (c *Certs) setupKeys() {
+	for _, cert := range c.Certificates {
+		cert.PrivateKey = key.GenerateKey(cert.CertConfig.KeyType, cert.CertConfig.KeyLength)
+	}
+}
+
+func (c *Certs) setupTemplates() {
+	for _, cert := range c.Certificates {
+		d := cert.CertConfig
+		template := certificate.Certificate{
+			Country:            d.Pkix.Country,
+			Organization:       d.Pkix.Organization,
+			OrganizationalUnit: d.Pkix.OrganizationUnit,
+			CommonName:         d.Pkix.CommonName,
+			AlternativeNames:   d.AltNames,
+			CA:                 d.CA,
+		}
+		cert.CertTemplate = certificate.CreateCertificateTemplate(template)
 	}
 }
 
