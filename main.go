@@ -1,9 +1,12 @@
 package main
 
-import "github.com/chrjoh/certificateBar/assember"
+import (
+	"github.com/chrjoh/certificateBar/assember"
+	"github.com/chrjoh/certificateBar/certificate"
+)
 
 func main() {
-	//	certificate.Handler()
+	certificate.Handler()
 	assembler.Handler()
 
 }

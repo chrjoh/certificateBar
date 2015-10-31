@@ -2,7 +2,6 @@ package certificate
 
 import (
 	"crypto/rand"
-	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
@@ -10,6 +9,8 @@ import (
 	"math/big"
 	"os"
 	"time"
+
+	"github.com/chrjoh/certificateBar/key"
 )
 
 // view remote certificate
@@ -31,7 +32,7 @@ type certificate struct {
 func Handler() {
 
 	ca, caPriv := createCA()
-	caPub := &caPriv.PublicKey
+	caPub := key.PublicKey(caPriv)
 	caBytes, err := x509.CreateCertificate(rand.Reader, ca, ca, caPub, caPriv)
 	if err != nil {
 		log.Println("create ca failed", err)
@@ -41,7 +42,7 @@ func Handler() {
 	// test to use a certificate that is not allowed to sign as a sign certificate, checkCertificate must fail
 	// set CA to false for this check on inteCA cert
 	interCa, interCaPriv := createInterCA()
-	interCaPub := &interCaPriv.PublicKey
+	interCaPub := key.PublicKey(interCaPriv)
 	interCaBytes, err := x509.CreateCertificate(rand.Reader, interCa, ca, interCaPub, caPriv)
 	if err != nil {
 		log.Println("create interCa failed", err)
@@ -50,7 +51,7 @@ func Handler() {
 	writePemToFile(interCaBytes, "interCa.pem")
 
 	client, clientPriv := createClient()
-	clientPub := &clientPriv.PublicKey
+	clientPub := key.PublicKey(clientPriv)
 	clientBytes, err := x509.CreateCertificate(rand.Reader, client, interCa, clientPub, interCaPriv)
 	if err != nil {
 		log.Println("create client failed", err)
@@ -60,7 +61,7 @@ func Handler() {
 	checkCertificate(caBytes, interCaBytes, clientBytes)
 }
 
-func createCA() (*x509.Certificate, *rsa.PrivateKey) {
+func createCA() (*x509.Certificate, interface{}) {
 	caData := certificate{
 		Country:            "SE",
 		Organization:       "test",
@@ -69,14 +70,14 @@ func createCA() (*x509.Certificate, *rsa.PrivateKey) {
 		SubjectKey:         []byte{1, 2, 3, 4, 5, 6},
 	}
 
-	caPriv, _ := rsa.GenerateKey(rand.Reader, 1024) // use small key so generation is fast
-	caPub := &caPriv.PublicKey
-	writePrivateKeyToPemFile(caPriv, "ca_private_key.pem")
-	writePublicKeyToPemFile(caPub, "ca_public_key.pem")
+	caPriv := key.GenerateKey("RSA", 1024) // use small key so generation is fast
+	caPub := key.PublicKey(caPriv)
+	key.WritePrivateKeyToPemFile(caPriv, "ca_private_key.pem")
+	key.WritePublicKeyToPemFile(caPub, "ca_public_key.pem")
 	return createCertificateTemplate(caData), caPriv
 }
 
-func createInterCA() (*x509.Certificate, *rsa.PrivateKey) {
+func createInterCA() (*x509.Certificate, interface{}) {
 	interCaData := certificate{
 		Country:            "SE",
 		Organization:       "test",
@@ -84,14 +85,14 @@ func createInterCA() (*x509.Certificate, *rsa.PrivateKey) {
 		CA:                 true,
 		SubjectKey:         []byte{1, 2, 3},
 	}
-	interCaPriv, _ := rsa.GenerateKey(rand.Reader, 1024)
-	interCaPub := &interCaPriv.PublicKey
-	writePrivateKeyToPemFile(interCaPriv, "interCa_private_key.pem")
-	writePublicKeyToPemFile(interCaPub, "interCa_public_key.pem")
+	interCaPriv := key.GenerateKey("RSA", 1024)
+	interCaPub := key.PublicKey(interCaPriv)
+	key.WritePrivateKeyToPemFile(interCaPriv, "interCa_private_key.pem")
+	key.WritePublicKeyToPemFile(interCaPub, "interCa_public_key.pem")
 	return createCertificateTemplate(interCaData), interCaPriv
 }
 
-func createClient() (*x509.Certificate, *rsa.PrivateKey) {
+func createClient() (*x509.Certificate, interface{}) {
 	clientData := certificate{
 		Country:            "SE",
 		Organization:       "test",
@@ -101,10 +102,10 @@ func createClient() (*x509.Certificate, *rsa.PrivateKey) {
 		CommonName:         "www.baz.se",
 		AlternativeNames:   []string{"www.foo.se", "www.bar.se"},
 	}
-	clientPriv, _ := rsa.GenerateKey(rand.Reader, 1024)
-	clientPub := &clientPriv.PublicKey
-	writePrivateKeyToPemFile(clientPriv, "client_private_key.pem")
-	writePublicKeyToPemFile(clientPub, "client_public_key.pem")
+	clientPriv := key.GenerateKey("RSA", 1024)
+	clientPub := key.PublicKey(clientPriv)
+	key.WritePrivateKeyToPemFile(clientPriv, "client_private_key.pem")
+	key.WritePublicKeyToPemFile(clientPub, "client_public_key.pem")
 	return createCertificateTemplate(clientData), clientPriv
 }
 
@@ -168,27 +169,6 @@ func getExtKeyUsage(ca bool) []x509.ExtKeyUsage {
 		return []x509.ExtKeyUsage{}
 	}
 	return []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth}
-}
-
-func writePrivateKeyToPemFile(key *rsa.PrivateKey, fileName string) {
-	keyFile, err := os.Create(fileName)
-	defer keyFile.Close()
-	if err != nil {
-		log.Fatalf("Failed to open %s for writing private key: %s\n", fileName, err)
-	}
-	pem.Encode(keyFile, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
-	log.Printf("wrote private key %s to file\n", fileName)
-}
-
-func writePublicKeyToPemFile(key *rsa.PublicKey, fileName string) {
-	keyFile, err := os.Create(fileName)
-	defer keyFile.Close()
-	if err != nil {
-		log.Fatalf("Failed to open %s for writing public key: %s\n", fileName, err)
-	}
-	pubKey, _ := x509.MarshalPKIXPublicKey(key)
-	pem.Encode(keyFile, &pem.Block{Type: "RSA PUBLIC KEY", Bytes: pubKey})
-	log.Printf("wrote public key %s to file\n", fileName)
 }
 
 func writePemToFile(b []byte, fileName string) {
