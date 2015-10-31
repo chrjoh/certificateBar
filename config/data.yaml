@@ -43,7 +43,7 @@ certificates:
         commonname: www.bar2.se
         country: SE
         organization: test
-        organizationunit: testinterca2
+        organizationunit: testinterca3
       keytype: RSA
       keylength: 1024
       hashalg: SHA2
@@ -70,7 +70,7 @@ certificates:
         commonname: www.baz.se
         country: SE
         organization: test
-        organizationunit: testweb
+        organizationunit: testweb2
       keytype: RSA
       keylength: 1024
       hashalg: SHA2

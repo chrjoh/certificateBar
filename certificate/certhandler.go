@@ -38,7 +38,7 @@ func Handler() {
 		log.Println("create ca failed", err)
 		return
 	}
-	writePemToFile(caBytes, "ca.pem")
+	WritePemToFile(caBytes, "ca.pem")
 	// test to use a certificate that is not allowed to sign as a sign certificate, checkCertificate must fail
 	// set CA to false for this check on inteCA cert
 	interCa, interCaPriv := createInterCA()
@@ -48,7 +48,7 @@ func Handler() {
 		log.Println("create interCa failed", err)
 		return
 	}
-	writePemToFile(interCaBytes, "interCa.pem")
+	WritePemToFile(interCaBytes, "interCa.pem")
 
 	client, clientPriv := createClient()
 	clientPub := key.PublicKey(clientPriv)
@@ -57,7 +57,7 @@ func Handler() {
 		log.Println("create client failed", err)
 		return
 	}
-	writePemToFile(clientBytes, "client.pem")
+	WritePemToFile(clientBytes, "client.pem")
 	checkCertificate(caBytes, interCaBytes, clientBytes)
 }
 
@@ -189,7 +189,7 @@ func getExtKeyUsage(ca bool) []x509.ExtKeyUsage {
 	return []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth}
 }
 
-func writePemToFile(b []byte, fileName string) {
+func WritePemToFile(b []byte, fileName string) {
 	certFile, err := os.Create(fileName)
 	defer certFile.Close()
 	if err != nil {

@@ -1,6 +1,7 @@
 package assembler
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -51,6 +52,15 @@ func (c *Certs) setupKeys() {
 	}
 }
 
+func (c *Certs) findByid(id string) (*Cert, error) {
+	for _, cert := range c.Certificates {
+		if cert.CertConfig.Id == id {
+			return cert, nil
+		}
+	}
+	return &Cert{}, errors.New("No cert found")
+}
+
 func (c *Certs) setupTemplates() {
 	for _, cert := range c.Certificates {
 		d := cert.CertConfig
@@ -74,12 +84,13 @@ func (c *Certs) signAll() {
 		}
 		for _, s := range sign {
 			id := s.CertConfig.Id
+			signer, _ := c.findByid(id)
 			list := c.certSigners[id]
 			for _, certId := range list {
 				fmt.Printf("%v is Sign: %s\n", id, certId)
 				for _, cert := range c.Certificates {
 					if cert.CertConfig.Id == certId {
-						// use s to sign certificate
+						cert.CertBytes = certificate.Sign(cert.CertTemplate, signer.CertTemplate, key.PublicKey(cert.PrivateKey), signer.PrivateKey)
 						cert.signed = true
 						if s.Signers == nil {
 							cert.Signers = []string{id}
@@ -94,6 +105,7 @@ func (c *Certs) signAll() {
 	}
 	for _, cert := range c.Certificates {
 		if len(cert.Signers) > 0 {
+			certificate.WritePemToFile(cert.CertBytes, cert.CertConfig.Id+".pem")
 			fmt.Printf("Cert: %s, has certificate chain: %v\n", cert.CertConfig.Id, strings.Join(cert.Signers, ", "))
 		}
 		if !cert.signed {
