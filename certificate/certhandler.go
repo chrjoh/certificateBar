@@ -9,8 +9,6 @@ import (
 	"math/big"
 	"os"
 	"time"
-
-	"github.com/chrjoh/certificateBar/key"
 )
 
 // view remote certificate
@@ -29,38 +27,6 @@ type Certificate struct {
 	SubjectKey         []byte
 }
 
-func Handler() {
-
-	ca, caPriv := createCA()
-	caPub := key.PublicKey(caPriv)
-	caBytes, err := x509.CreateCertificate(rand.Reader, ca, ca, caPub, caPriv)
-	if err != nil {
-		log.Println("create ca failed", err)
-		return
-	}
-	WritePemToFile(caBytes, "ca.pem")
-	// test to use a certificate that is not allowed to sign as a sign certificate, checkCertificate must fail
-	// set CA to false for this check on inteCA cert
-	interCa, interCaPriv := createInterCA()
-	interCaPub := key.PublicKey(interCaPriv)
-	interCaBytes, err := x509.CreateCertificate(rand.Reader, interCa, ca, interCaPub, caPriv)
-	if err != nil {
-		log.Println("create interCa failed", err)
-		return
-	}
-	WritePemToFile(interCaBytes, "interCa.pem")
-
-	client, clientPriv := createClient()
-	clientPub := key.PublicKey(clientPriv)
-	clientBytes, err := x509.CreateCertificate(rand.Reader, client, interCa, clientPub, interCaPriv)
-	if err != nil {
-		log.Println("create client failed", err)
-		return
-	}
-	WritePemToFile(clientBytes, "client.pem")
-	checkCertificate(caBytes, interCaBytes, clientBytes)
-}
-
 func Sign(cert *x509.Certificate, signer *x509.Certificate, certPubKey, signerPrivateKey interface{}) []byte {
 	derBytes, err := x509.CreateCertificate(rand.Reader, cert, signer, certPubKey, signerPrivateKey)
 	if err != nil {
@@ -70,58 +36,10 @@ func Sign(cert *x509.Certificate, signer *x509.Certificate, certPubKey, signerPr
 	return derBytes
 }
 
-func createCA() (*x509.Certificate, interface{}) {
-	caData := Certificate{
-		Country:            "SE",
-		Organization:       "test",
-		OrganizationalUnit: "WebCA",
-		CA:                 true,
-		SubjectKey:         []byte{1, 2, 3, 4, 5, 6},
-	}
-
-	caPriv := key.GenerateKey("P224", 0) // use small key so generation is fast
-	caPub := key.PublicKey(caPriv)
-	key.WritePrivateKeyToPemFile(caPriv, "ca_private_key.pem")
-	key.WritePublicKeyToPemFile(caPub, "ca_public_key.pem")
-	return CreateCertificateTemplate(caData), caPriv
-}
-
-func createInterCA() (*x509.Certificate, interface{}) {
-	interCaData := Certificate{
-		Country:            "SE",
-		Organization:       "test",
-		OrganizationalUnit: "WebInterCA",
-		CA:                 true,
-		SubjectKey:         []byte{1, 2, 3},
-	}
-	interCaPriv := key.GenerateKey("RSA", 1024)
-	interCaPub := key.PublicKey(interCaPriv)
-	key.WritePrivateKeyToPemFile(interCaPriv, "interCa_private_key.pem")
-	key.WritePublicKeyToPemFile(interCaPub, "interCa_public_key.pem")
-	return CreateCertificateTemplate(interCaData), interCaPriv
-}
-
 // NOTE:
 //If an SSL certificate has a Subject Alternative Name (SAN) field, then SSL clients are supposed to ignore
 //the common name value and seek a match in the SAN list.
 //This is why the Cert always repeats the common name as the first SAN in the certificate.
-func createClient() (*x509.Certificate, interface{}) {
-	clientData := Certificate{
-		Country:            "SE",
-		Organization:       "test",
-		OrganizationalUnit: "Web",
-		CA:                 false,
-		SubjectKey:         []byte{1, 6},
-		CommonName:         "www.baz.se",
-		AlternativeNames:   []string{"www.baz.se", "www.foo.se", "www.bar.se"},
-	}
-	clientPriv := key.GenerateKey("RSA", 1024)
-	clientPub := key.PublicKey(clientPriv)
-	key.WritePrivateKeyToPemFile(clientPriv, "client_private_key.pem")
-	key.WritePublicKeyToPemFile(clientPub, "client_public_key.pem")
-	return CreateCertificateTemplate(clientData), clientPriv
-}
-
 func CreateCertificateTemplate(data Certificate) *x509.Certificate {
 	extKeyUsage := getExtKeyUsage(data.CA)
 	keyUsage := getKeyUsage(data.CA)
@@ -153,7 +71,7 @@ func CreateCertificateTemplate(data Certificate) *x509.Certificate {
 	return cert
 }
 
-func checkCertificate(caBytes, interCaBytes, clientBytes []byte) {
+func CheckCertificate(caBytes, interCaBytes, clientBytes []byte) bool {
 	rootPool := x509.NewCertPool()
 	rootCert, _ := x509.ParseCertificate(caBytes)
 	rootPool.AddCert(rootCert)
@@ -174,6 +92,7 @@ func checkCertificate(caBytes, interCaBytes, clientBytes []byte) {
 		os.Exit(1)
 	}
 	log.Println("Certificates verify: OK")
+	return true
 }
 func getKeyUsage(ca bool) x509.KeyUsage {
 	if ca {

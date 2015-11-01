@@ -88,17 +88,13 @@ func (c *Certs) signAll() {
 			list := c.certSigners[id]
 			for _, certId := range list {
 				fmt.Printf("%v is Sign: %s\n", id, certId)
-				for _, cert := range c.Certificates {
-					if cert.CertConfig.Id == certId {
-						cert.CertBytes = certificate.Sign(cert.CertTemplate, signer.CertTemplate, key.PublicKey(cert.PrivateKey), signer.PrivateKey)
-						cert.signed = true
-						if s.Signers == nil {
-							cert.Signers = []string{id}
-						} else {
-							cert.Signers = append(s.Signers, id)
-						}
-						break
-					}
+				cert, _ := c.findByid(certId)
+				cert.CertBytes = certificate.Sign(cert.CertTemplate, signer.CertTemplate, key.PublicKey(cert.PrivateKey), signer.PrivateKey)
+				cert.signed = true
+				if s.Signers == nil {
+					cert.Signers = []string{id}
+				} else {
+					cert.Signers = append(s.Signers, id)
 				}
 			}
 		}
