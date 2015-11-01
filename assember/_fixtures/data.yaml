@@ -1,0 +1,94 @@
+certificates:
+  - certificate: 
+      id: mainca
+      parent: mainca
+      ca: true
+      pkix:
+        commonname: www.foo.se
+        country: SE
+        organization: test
+        organizationunit: testca
+      keytype: P224
+      keylength: 1024
+      hashalg: SHA2
+  - certificate: 
+      id: interca
+      parent: mainca
+      ca: true
+      pkix:
+        commonname: www.bar.se
+        country: SE
+        organization: test
+        organizationunit: testinterca
+      keytype: RSA
+      keylength: 1024
+      hashalg: SHA2
+  - certificate: 
+      id: interca2
+      parent: mainca
+      ca: true
+      pkix:
+        commonname: www.bar2.se
+        country: SE
+        organization: test
+        organizationunit: testinterca2
+      keytype: RSA
+      keylength: 1024
+      hashalg: SHA2
+  - certificate: 
+      id: interca3
+      parent: interca2
+      ca: true 
+      pkix:
+        commonname: www.bar2.se
+        country: SE
+        organization: test
+        organizationunit: testinterca3
+      keytype: RSA
+      keylength: 1024
+      hashalg: SHA2
+  - certificate: 
+      id: client
+      parent: interca
+      ca: false
+      pkix:
+        commonname: www.baz.se
+        country: SE
+        organization: test
+        organizationunit: testweb
+      keytype: RSA
+      keylength: 1024
+      hashalg: SHA2
+      altnames: 
+        - www.dront.se 
+        - www.fro.se 
+  - certificate: 
+      id: client2
+      parent: interca3
+      ca: false
+      pkix:
+        commonname: www.baz.se
+        country: SE
+        organization: test
+        organizationunit: testweb2
+      keytype: RSA
+      keylength: 1024
+      hashalg: SHA2
+      altnames: 
+        - www.dront.se 
+        - www.fro.se 
+  - certificate: 
+      id: client3
+      parent: intercaNotPresent
+      ca: false
+      pkix:
+        commonname: www.baz.se
+        country: SE
+        organization: test
+        organizationunit: testweb
+      keytype: RSA
+      keylength: 1024
+      hashalg: SHA2
+      altnames: 
+        - www.dront.se 
+        - www.fro.se 

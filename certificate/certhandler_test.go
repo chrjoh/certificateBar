@@ -51,7 +51,7 @@ func TestValidSignedCertificateCahin(t *testing.T) {
 	client, clientPriv := createClient()
 	clientPub := key.PublicKey(clientPriv)
 	clientBytes := Sign(client, interCa, clientPub, interCaPriv)
-	for _, name := range []string{"e", "www.baz.se", "www.foo.se", "www.bar.se"} {
+	for _, name := range []string{"", "www.baz.se", "www.foo.se", "www.bar.se"} {
 		chainOk := CheckCertificate(name, caBytes, interCaBytes, clientBytes)
 		if !chainOk {
 			t.Fatalf("Failed to verify client for dnsName: ", name)

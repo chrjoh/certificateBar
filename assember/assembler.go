@@ -25,7 +25,7 @@ func Handler() {
 	test.setupTemplates()
 	test.setupSigner()
 	test.signAll()
-	//	fmt.Printf("--- test:\n%v\n\n", test)
+	//test.Output()
 
 }
 func (c *Certs) setupSigner() {
@@ -99,6 +99,9 @@ func (c *Certs) signAll() {
 			}
 		}
 	}
+}
+
+func (c Certs) Output() {
 	for _, cert := range c.Certificates {
 		if cert.signed {
 			certificate.WritePemToFile(cert.CertBytes, cert.CertConfig.Id+".pem")
