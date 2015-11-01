@@ -2,12 +2,46 @@ package certificate
 
 import (
 	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/asn1"
 	"testing"
 
 	"github.com/chrjoh/certificateBar/key"
 )
 
+var (
+	OU = asn1.ObjectIdentifier{2, 5, 4, 11}
+)
+
 func TestCreateCertificateCahin(t *testing.T) {
+	ca, caPriv := createCA()
+	caPub := key.PublicKey(caPriv)
+	caBytes := Sign(ca, ca, caPub, caPriv)
+	interCa, interCaPriv := createInterCA()
+	interCaPub := key.PublicKey(interCaPriv)
+	interCaBytes := Sign(interCa, ca, interCaPub, caPriv)
+	client, clientPriv := createClient()
+	clientPub := key.PublicKey(clientPriv)
+	clientBytes := Sign(client, interCa, clientPub, interCaPriv)
+
+	clientCert, _ := x509.ParseCertificate(clientBytes)
+	ouIssuer := getPkixValue(clientCert.Issuer.Names, OU)
+	if ouIssuer != "WebInterCA" {
+		t.Fatalf("Wrong issuer ou wanted: WebInterCA, got: %v\n", ouIssuer)
+	}
+	interCert, _ := x509.ParseCertificate(interCaBytes)
+	ouIssuer = getPkixValue(interCert.Issuer.Names, OU)
+	if ouIssuer != "WebCA" {
+		t.Fatalf("Wrong issuer ou wanted: WebCA, got: %v\n", ouIssuer)
+	}
+	caCert, _ := x509.ParseCertificate(caBytes)
+	ouIssuer = getPkixValue(caCert.Issuer.Names, OU)
+	if ouIssuer != "WebCA" {
+		t.Fatalf("Wrong issuer ou wanted: WebCA, got: %v\n", ouIssuer)
+	}
+}
+
+func TestValidSignedCertificateCahin(t *testing.T) {
 
 	ca, caPriv := createCA()
 	caPub := key.PublicKey(caPriv)
@@ -15,7 +49,6 @@ func TestCreateCertificateCahin(t *testing.T) {
 	interCa, interCaPriv := createInterCA()
 	interCaPub := key.PublicKey(interCaPriv)
 	interCaBytes := Sign(interCa, ca, interCaPub, caPriv)
-
 	client, clientPriv := createClient()
 	clientPub := key.PublicKey(clientPriv)
 	clientBytes := Sign(client, interCa, clientPub, interCaPriv)
@@ -24,7 +57,6 @@ func TestCreateCertificateCahin(t *testing.T) {
 		t.Fatal("Failed to create certificate chain")
 	}
 }
-
 func createCA() (*x509.Certificate, interface{}) {
 	caData := Certificate{
 		Country:            "SE",
@@ -62,4 +94,13 @@ func createClient() (*x509.Certificate, interface{}) {
 	}
 	clientPriv := key.GenerateKey("RSA", 1024)
 	return CreateCertificateTemplate(clientData), clientPriv
+}
+
+func getPkixValue(values []pkix.AttributeTypeAndValue, key asn1.ObjectIdentifier) string {
+	for _, v := range values {
+		if v.Type.Equal(key) {
+			return v.Value.(string)
+		}
+	}
+	return ""
 }
