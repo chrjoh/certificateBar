@@ -6,15 +6,27 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/chrjoh/certificateBar/certificate"
+
 	"gopkg.in/yaml.v2"
 )
 
 func TestReadConfigFile(t *testing.T) {
-	marshalCertData(t)
+	test := marshalCertData("_fixtures/one_cert.yaml", t)
+	c := test.Certificates[0].CertConfig
+	if !c.CA {
+		t.Fatalf("wanted: true, got:", c.CA)
+	}
+	if c.KeyType != "P224" {
+		t.Fatalf("wanted: P224, got:", c.KeyType)
+	}
+	if c.Pkix.CommonName != "www.foo.se" {
+		t.Fatalf("wanted: www.foo.se, got:", c.Pkix.CommonName)
+	}
 }
 
 func TestKeySetup(t *testing.T) {
-	test := marshalCertData(t)
+	test := marshalCertData("_fixtures/data.yaml", t)
 	test.setupKeys()
 	for _, c := range test.Certificates {
 		if c.CertConfig.Id == "mainca" {
@@ -28,8 +40,9 @@ func TestKeySetup(t *testing.T) {
 		}
 	}
 }
+
 func TestSignAll(t *testing.T) {
-	test := marshalCertData(t)
+	test := marshalCertData("_fixtures/data.yaml", t)
 	test.setupKeys()
 	test.setupTemplates()
 	test.setupSigner()
@@ -41,23 +54,52 @@ func TestSignAll(t *testing.T) {
 			}
 		}
 	}
+	client, _ := test.findByid("client")
+	ca, _ := test.findByid(client.Signers[0])
+	inca, _ := test.findByid(client.Signers[1])
+	result := certificate.CheckCertificate("", ca.CertBytes, inca.CertBytes, client.CertBytes)
+	if !result {
+		t.Fatal("certificate with id: client did not have correct certificate chain")
+	}
 }
 
 func TestInitialSigner(t *testing.T) {
-	test := marshalCertData(t)
+	test := marshalCertData("_fixtures/data.yaml", t)
 	test.setupKeys()
 	test.setupTemplates()
 	test.setupSigner()
+	for _, v := range test.Certificates {
+		if v.CertConfig.Id == "mainca" && !v.signed {
+			t.Fatalf("selfsigned certificate %v was not signed", v.CertConfig.Id)
+		}
+		if v.CertConfig.Id != "mainca" && v.signed {
+			t.Fatalf("non root cert %v was signed", v.CertConfig.Id)
+		}
+	}
 }
 
 func TestTemplateSetup(t *testing.T) {
-	test := marshalCertData(t)
+	test := marshalCertData("_fixtures/data.yaml", t)
 	test.setupTemplates()
+	for _, v := range test.Certificates {
+		if v.CertTemplate == nil {
+			t.Fatalf("Failed to create template for: %v", v.CertConfig.Id)
+		}
+	}
 }
 
-func marshalCertData(t *testing.T) Certs {
+func TestFindById(t *testing.T) {
+	test := marshalCertData("_fixtures/data.yaml", t)
+	cert, _ := test.findByid("client")
+	ou := cert.CertConfig.Pkix.OrganizationUnit
+	if ou != "testweb" {
+		t.Fatalf("Failed to cert got: %v wanted: testweb", ou)
+	}
+}
+
+func marshalCertData(filename string, t *testing.T) Certs {
 	test := Certs{}
-	data := ReadFile("_fixtures/data.yaml")
+	data := ReadFile(filename)
 	err := yaml.Unmarshal(data, &test)
 	if err != nil {
 		t.Fatalf("error: %v", err)

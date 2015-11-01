@@ -1,0 +1,13 @@
+certificates:
+  - certificate: 
+      id: mainca
+      parent: mainca
+      ca: true
+      pkix:
+        commonname: www.foo.se
+        country: SE
+        organization: test
+        organizationunit: testca
+      keytype: P224
+      keylength: 1024
+      hashalg: SHA2
