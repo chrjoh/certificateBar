@@ -42,7 +42,6 @@ func TestCreateCertificateCahin(t *testing.T) {
 }
 
 func TestValidSignedCertificateCahin(t *testing.T) {
-
 	ca, caPriv := createCA()
 	caPub := key.PublicKey(caPriv)
 	caBytes := Sign(ca, ca, caPub, caPriv)
@@ -52,9 +51,11 @@ func TestValidSignedCertificateCahin(t *testing.T) {
 	client, clientPriv := createClient()
 	clientPub := key.PublicKey(clientPriv)
 	clientBytes := Sign(client, interCa, clientPub, interCaPriv)
-	chainOk := CheckCertificate(caBytes, interCaBytes, clientBytes)
-	if !chainOk {
-		t.Fatal("Failed to create certificate chain")
+	for _, name := range []string{"e", "www.baz.se", "www.foo.se", "www.bar.se"} {
+		chainOk := CheckCertificate(name, caBytes, interCaBytes, clientBytes)
+		if !chainOk {
+			t.Fatalf("Failed to verify client for dnsName: ", name)
+		}
 	}
 }
 func createCA() (*x509.Certificate, interface{}) {

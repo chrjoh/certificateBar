@@ -71,7 +71,7 @@ func CreateCertificateTemplate(data Certificate) *x509.Certificate {
 	return cert
 }
 
-func CheckCertificate(caBytes, interCaBytes, clientBytes []byte) bool {
+func CheckCertificate(dnsName string, caBytes, interCaBytes, clientBytes []byte) bool {
 	rootPool := x509.NewCertPool()
 	rootCert, _ := x509.ParseCertificate(caBytes)
 	rootPool.AddCert(rootCert)
@@ -81,7 +81,7 @@ func CheckCertificate(caBytes, interCaBytes, clientBytes []byte) bool {
 		interCaPool.AddCert(cert)
 	}
 	opts := x509.VerifyOptions{
-		DNSName:       "www.baz.se",
+		DNSName:       dnsName,
 		Roots:         rootPool,
 		Intermediates: interCaPool,
 	}
