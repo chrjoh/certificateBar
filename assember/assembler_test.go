@@ -17,9 +17,6 @@ func TestKeySetup(t *testing.T) {
 	test := marshalCertData(t)
 	test.setupKeys()
 	for _, c := range test.Certificates {
-		if c.PrivateKey == nil {
-			t.Fatalf("Cert %v did not get a private key", c.CertConfig.Id)
-		}
 		if c.CertConfig.Id == "mainca" {
 			if reflect.TypeOf(c.PrivateKey) != reflect.TypeOf((*ecdsa.PrivateKey)(nil)) {
 				t.Fatalf("got: %v, want %v", reflect.TypeOf(c.PrivateKey), reflect.TypeOf((*ecdsa.PrivateKey)(nil)))
