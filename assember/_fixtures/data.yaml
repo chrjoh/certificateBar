@@ -9,7 +9,6 @@ certificates:
         organization: test
         organizationunit: testca
       keytype: P224
-      keylength: 1024
       hashalg: SHA2
   - certificate: 
       id: interca
