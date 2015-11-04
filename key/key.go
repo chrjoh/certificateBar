@@ -7,6 +7,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 	"log"
 	"os"
 )
@@ -57,11 +58,11 @@ func WritePrivateKeyToPemFile(key interface{}, fileName string) {
 	switch k := key.(type) {
 	case *rsa.PrivateKey:
 		pem.Encode(keyFile, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(k)})
-		log.Printf("wrote RSA private key %s to file\n", fileName)
+		fmt.Printf("wrote RSA private key %s to file\n", fileName)
 	case *ecdsa.PrivateKey:
 		ecKey, _ := x509.MarshalECPrivateKey(k)
 		pem.Encode(keyFile, &pem.Block{Type: "EC PRIVATE KEY", Bytes: ecKey})
-		log.Printf("wrote EC private key %s to file\n", fileName)
+		fmt.Printf("wrote EC private key %s to file\n", fileName)
 	default:
 		log.Printf("Uknown key type: %v to write to file", key)
 	}

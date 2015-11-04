@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"fmt"
 	"log"
 	"math/big"
 	"os"
@@ -115,5 +116,5 @@ func WritePemToFile(b []byte, fileName string) {
 		log.Fatalf("Failed to open %s for writing cerificate: %s\n", fileName, err)
 	}
 	pem.Encode(certFile, &pem.Block{Type: "CERTIFICATE", Bytes: b})
-	log.Printf("wrote certificate %s to file\n", fileName)
+	fmt.Printf("wrote certificate %s to file\n", fileName)
 }

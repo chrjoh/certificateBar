@@ -99,7 +99,7 @@ func TestFindById(t *testing.T) {
 
 func marshalCertData(filename string, t *testing.T) Certs {
 	test := Certs{}
-	data := ReadFile(filename)
+	data := readFile(filename)
 	err := yaml.Unmarshal(data, &test)
 	if err != nil {
 		t.Fatalf("error: %v", err)

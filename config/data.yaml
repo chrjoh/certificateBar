@@ -8,7 +8,7 @@ certificates:
         country: SE
         organization: test
         organizationunit: testca
-      keytype: RSA
+      keytype: P224
       keylength: 1024
       hashalg: SHA2
   - certificate: 

@@ -14,20 +14,20 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func Handler() {
-	test := Certs{}
-	data := ReadFile("./config/data.yaml")
-	err := yaml.Unmarshal(data, &test)
+func Generate(filename string) Certs {
+	c := Certs{}
+	data := readFile(filename)
+	err := yaml.Unmarshal(data, &c)
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
-	test.setupKeys()
-	test.setupTemplates()
-	test.setupSigner()
-	test.signAll()
-	//test.Output()
-
+	c.setupKeys()
+	c.setupTemplates()
+	c.setupSigner()
+	c.signAll()
+	return c
 }
+
 func (c *Certs) setupSigner() {
 	c.certSigners = make(map[string][]string)
 	for _, val := range c.Certificates {
@@ -87,7 +87,6 @@ func (c *Certs) signAll() {
 			signer, _ := c.findByid(id)
 			list := c.certSigners[id]
 			for _, certId := range list {
-				fmt.Printf("%v is Sign: %s\n", id, certId)
 				cert, _ := c.findByid(certId)
 				cert.CertBytes = certificate.Sign(cert.CertTemplate, signer.CertTemplate, key.PublicKey(cert.PrivateKey), signer.PrivateKey)
 				cert.signed = true
@@ -104,10 +103,11 @@ func (c *Certs) signAll() {
 func (c Certs) Output() {
 	for _, cert := range c.Certificates {
 		if cert.signed {
-			certificate.WritePemToFile(cert.CertBytes, cert.CertConfig.Id+".pem")
+			certificate.WritePemToFile(cert.CertBytes, cert.CertConfig.Id+"_crt.pem")
+			key.WritePrivateKeyToPemFile(cert.PrivateKey, cert.CertConfig.Id+"_key.pem")
 		}
 		if len(cert.Signers) > 0 {
-			fmt.Printf("Cert: %s, has certificate chain: %v\n", cert.CertConfig.Id, strings.Join(cert.Signers, ", "))
+			fmt.Printf("Certificate: %s, has certificate chain: %v\n", cert.CertConfig.Id, strings.Join(cert.Signers, ", "))
 		}
 		if !cert.signed {
 			fmt.Printf("Failed to sign: %s\n", cert.CertConfig.Id)
@@ -126,7 +126,7 @@ func findSigners(c *Certs) []*Cert {
 	return sign
 }
 
-func ReadFile(name string) []byte {
+func readFile(name string) []byte {
 	data, err := ioutil.ReadFile(name)
 	if err != nil {
 		log.Println("Could not read file: %s\n", name)

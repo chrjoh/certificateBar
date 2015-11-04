@@ -4,7 +4,7 @@ Initial setup, the goal is to create a simple tool to generate certificate and c
 development/stage environments. The setup should allow you to be able to change key types,
 key usage and other parameters on the certificates to verify that the test setup is working.
 The configurations will be aimed to remove some of the "magic" that people find then working with PKI and
-certificates.
+certificates. The project is work in progress.
 
 On a side note is the interesting announcement from NSA regaring elliptic curve crypto, see
 http://eprint.iacr.org/2015/1018.pdf
@@ -13,7 +13,7 @@ http://eprint.iacr.org/2015/1018.pdf
 ## Installation
 
 ```bash
-$ go get -u
+$ go get -u github.com/chrjoh/certificatebar
 ```
 
 ## Usage
