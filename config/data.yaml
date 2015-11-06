@@ -1,5 +1,16 @@
 certificates:
   - certificate: 
+      id: maincaecdsa
+      parent: maincaecdsa
+      ca: true
+      pkix:
+        commonname: www.foo.se
+        country: SE
+        organization: test
+        organizationunit: testcaecdsa
+      keytype: P224
+      hashalg: SHA256
+  - certificate: 
       id: mainca
       parent: mainca
       ca: true
@@ -8,9 +19,9 @@ certificates:
         country: SE
         organization: test
         organizationunit: testca
-      keytype: P224
+      keytype: RSA
       keylength: 1024
-      hashalg: SHA2
+      hashalg: SHA256
   - certificate: 
       id: interca
       parent: mainca
@@ -22,7 +33,7 @@ certificates:
         organizationunit: testinterca
       keytype: RSA
       keylength: 1024
-      hashalg: SHA2
+      hashalg: SHA256
   - certificate: 
       id: interca2
       parent: mainca
@@ -34,7 +45,7 @@ certificates:
         organizationunit: testinterca2
       keytype: RSA
       keylength: 1024
-      hashalg: SHA2
+      hashalg: SHA256
   - certificate: 
       id: interca3
       parent: interca2
@@ -46,7 +57,7 @@ certificates:
         organizationunit: testinterca3
       keytype: RSA
       keylength: 1024
-      hashalg: SHA2
+      hashalg: SHA256
   - certificate: 
       id: client
       parent: interca
@@ -58,7 +69,7 @@ certificates:
         organizationunit: testweb
       keytype: RSA
       keylength: 1024
-      hashalg: SHA2
+      hashalg: SHA256
       altnames: 
         - www.dront.se 
         - www.fro.se 
@@ -73,22 +84,18 @@ certificates:
         organizationunit: testweb2
       keytype: RSA
       keylength: 1024
-      hashalg: SHA2
+      hashalg: SHA256
       altnames: 
         - www.dront.se 
         - www.fro.se 
   - certificate: 
-      id: client3
-      parent: intercaNotPresent
-      ca: false
+      id: clientecdsa
+      parent: maincaecdsa
+      ca: true
       pkix:
-        commonname: www.baz.se
+        commonname: www.bar.se
         country: SE
         organization: test
-        organizationunit: testweb
-      keytype: RSA
-      keylength: 1024
-      hashalg: SHA2
-      altnames: 
-        - www.dront.se 
-        - www.fro.se 
+        organizationunit: webclientecdsa
+      keytype: P224
+      hashalg: SHA256

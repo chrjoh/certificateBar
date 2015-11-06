@@ -71,6 +71,8 @@ func (c *Certs) setupTemplates() {
 			CommonName:         d.Pkix.CommonName,
 			AlternativeNames:   d.AltNames,
 			CA:                 d.CA,
+			PrivateKey:         cert.PrivateKey,
+			SignatureAlg:       d.HashAlg,
 		}
 		cert.CertTemplate = certificate.CreateCertificateTemplate(template)
 	}

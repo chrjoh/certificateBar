@@ -29,7 +29,7 @@ func TestKeySetup(t *testing.T) {
 	test := marshalCertData("_fixtures/data.yaml", t)
 	test.setupKeys()
 	for _, c := range test.Certificates {
-		if c.CertConfig.Id == "mainca" {
+		if c.CertConfig.Id == "maincaecdsa" || c.CertConfig.Id == "clientecdsa" {
 			if reflect.TypeOf(c.PrivateKey) != reflect.TypeOf((*ecdsa.PrivateKey)(nil)) {
 				t.Fatalf("got: %v, want %v", reflect.TypeOf(c.PrivateKey), reflect.TypeOf((*ecdsa.PrivateKey)(nil)))
 			}
@@ -69,10 +69,10 @@ func TestInitialSigner(t *testing.T) {
 	test.setupTemplates()
 	test.setupSigner()
 	for _, v := range test.Certificates {
-		if v.CertConfig.Id == "mainca" && !v.signed {
+		if (v.CertConfig.Id == "mainca" || v.CertConfig.Id == "maincaecdsa") && !v.signed {
 			t.Fatalf("selfsigned certificate %v was not signed", v.CertConfig.Id)
 		}
-		if v.CertConfig.Id != "mainca" && v.signed {
+		if !(v.CertConfig.Id == "mainca" || v.CertConfig.Id == "maincaecdsa") && v.signed {
 			t.Fatalf("non root cert %v was signed", v.CertConfig.Id)
 		}
 	}
@@ -80,6 +80,7 @@ func TestInitialSigner(t *testing.T) {
 
 func TestTemplateSetup(t *testing.T) {
 	test := marshalCertData("_fixtures/data.yaml", t)
+	test.setupKeys()
 	test.setupTemplates()
 	for _, v := range test.Certificates {
 		if v.CertTemplate == nil {

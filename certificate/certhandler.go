@@ -1,7 +1,9 @@
 package certificate
 
 import (
+	"crypto/ecdsa"
 	"crypto/rand"
+	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
@@ -25,7 +27,9 @@ type Certificate struct {
 	CommonName         string
 	AlternativeNames   []string
 	CA                 bool
+	PrivateKey         interface{}
 	SubjectKey         []byte
+	SignatureAlg       string
 }
 
 func Sign(cert *x509.Certificate, signer *x509.Certificate, certPubKey, signerPrivateKey interface{}) []byte {
@@ -56,11 +60,10 @@ func CreateCertificateTemplate(data Certificate) *x509.Certificate {
 		NotAfter:              time.Now().AddDate(1, 0, 0),
 		SubjectKeyId:          data.SubjectKey,
 		BasicConstraintsValid: true,
-		// need to use different sig. alg for different key types
-		//		SignatureAlgorithm:    x509.SHA256WithRSA,
-		IsCA:        data.CA,
-		ExtKeyUsage: extKeyUsage,
-		KeyUsage:    keyUsage,
+		SignatureAlgorithm:    signatureAlgorithm(data.SignatureAlg, data.PrivateKey),
+		IsCA:                  data.CA,
+		ExtKeyUsage:           extKeyUsage,
+		KeyUsage:              keyUsage,
 	}
 
 	if data.CommonName != "" {
@@ -70,6 +73,48 @@ func CreateCertificateTemplate(data Certificate) *x509.Certificate {
 		cert.DNSNames = data.AlternativeNames
 	}
 	return cert
+}
+
+func signatureAlgorithm(algType string, privateKey interface{}) x509.SignatureAlgorithm {
+	switch privateKey.(type) {
+	case *rsa.PrivateKey:
+		return findRsaSignALg(algType)
+	case *ecdsa.PrivateKey:
+		return findEcdsaSignALg(algType)
+	default:
+		log.Fatal("Could not find any signature algorithm\n")
+		return x509.UnknownSignatureAlgorithm
+	}
+}
+
+func findEcdsaSignALg(algType string) x509.SignatureAlgorithm {
+	switch algType {
+	case "SHA1":
+		return x509.ECDSAWithSHA1
+	case "SHA256":
+		return x509.ECDSAWithSHA256
+	case "SHA384":
+		return x509.ECDSAWithSHA384
+	case "SHA512":
+		return x509.ECDSAWithSHA512
+	default:
+		return x509.ECDSAWithSHA256
+	}
+}
+
+func findRsaSignALg(algType string) x509.SignatureAlgorithm {
+	switch algType {
+	case "SHA1":
+		return x509.SHA1WithRSA
+	case "SHA256":
+		return x509.SHA256WithRSA
+	case "SHA384":
+		return x509.SHA384WithRSA
+	case "SHA512":
+		return x509.SHA512WithRSA
+	default:
+		return x509.SHA256WithRSA
+	}
 }
 
 func CheckCertificate(dnsName string, caBytes, interCaBytes, clientBytes []byte) bool {

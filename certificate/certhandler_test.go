@@ -59,31 +59,34 @@ func TestValidSignedCertificateCahin(t *testing.T) {
 	}
 }
 func createCA() (*x509.Certificate, interface{}) {
+	caPriv := key.GenerateKey("RSA", 1024)
 	caData := Certificate{
 		Country:            "SE",
 		Organization:       "test",
 		OrganizationalUnit: "WebCA",
 		CA:                 true,
 		SubjectKey:         []byte{1, 2, 3, 4, 5, 6},
+		PrivateKey:         caPriv,
 	}
 
-	caPriv := key.GenerateKey("P224", 0)
 	return CreateCertificateTemplate(caData), caPriv
 }
 
 func createInterCA() (*x509.Certificate, interface{}) {
+	interCaPriv := key.GenerateKey("RSA", 1024) // use small key for fast generation
 	interCaData := Certificate{
 		Country:            "SE",
 		Organization:       "test",
 		OrganizationalUnit: "WebInterCA",
 		CA:                 true,
 		SubjectKey:         []byte{1, 2, 3},
+		PrivateKey:         interCaPriv,
 	}
-	interCaPriv := key.GenerateKey("RSA", 1024) // use small key for fast generation
 	return CreateCertificateTemplate(interCaData), interCaPriv
 }
 
 func createClient() (*x509.Certificate, interface{}) {
+	clientPriv := key.GenerateKey("RSA", 1024)
 	clientData := Certificate{
 		Country:            "SE",
 		Organization:       "test",
@@ -92,8 +95,8 @@ func createClient() (*x509.Certificate, interface{}) {
 		SubjectKey:         []byte{1, 6},
 		CommonName:         "www.baz.se",
 		AlternativeNames:   []string{"www.baz.se", "www.foo.se", "www.bar.se"},
+		PrivateKey:         clientPriv,
 	}
-	clientPriv := key.GenerateKey("RSA", 1024)
 	return CreateCertificateTemplate(clientData), clientPriv
 }
 

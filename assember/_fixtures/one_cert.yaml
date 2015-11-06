@@ -10,4 +10,4 @@ certificates:
         organizationunit: testca
       keytype: P224
       keylength: 1024
-      hashalg: SHA2
+      hashalg: SHA2256
