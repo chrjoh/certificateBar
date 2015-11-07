@@ -17,7 +17,51 @@ $ go get -u github.com/chrjoh/certificatebar
 ```
 
 ## Usage
+```bash
+$ certificatebar --help
 
+Command line arguments:
+
+  -i configuration file to be used
+```
+
+## Config
+The structure of the config file is given bellow, certificates label conatins a list of certificate.
+(See config directory for a basic example setup.) Theexample below is a self signed certificate valis
+for domaoins `www.foo.se, www.dront.se, www.fro.se` using a 2048 RSA key
+```
+certificates:
+  - certificate:
+      id: mainca
+      parent: mainca
+      ca: true
+      pkix:
+        commonname: www.foo.se
+        country: SE
+        organization: test
+        organizationunit: testca
+      altnames:
+        - www.dront.se
+        - www.fro.se
+      keytype: RSA
+      keylength: 2048
+      hashalg: SHA256
+```
+The options for each keywords is
+
+| keyword | description | options |
+|---------|-------------|---------|
+| id      | id used to identify the certificate and also the name used then saving the certificate and the private key to a file | string: mainca |
+| parent  | certificate to be used then signing, must be a valid id | string: mainca |
+| ca      | is this certificate used to sign other certificates| boolean: true or false |
+| commonname       | the common name this certificate shoud have | string: www.foo.se |
+| country          | the country code to use | string:  SE |
+| organization     | organisation name | string:  test |
+| organizationunit | organisation unit to be used | string: testca |
+| altnames         | list of alternative DNS names this certificate is valid for | string: valid dns names |
+| keytype          | key type to be used| string: RSA, P224, P256, P384, P512 |
+| keylength        | key length, only used with RSA key | int: 2048 |
+| hashalg          | which algorithm to be used for signature | string: SHA1, SHA256, SHA384, SHA512 |
 
 ## License (MIT)
 
