@@ -94,7 +94,7 @@ func createClient() (*x509.Certificate, interface{}) {
 		CA:                 false,
 		SubjectKey:         []byte{1, 6},
 		CommonName:         "www.baz.se",
-		AlternativeNames:   []string{"www.baz.se", "www.foo.se", "www.bar.se"},
+		AlternativeNames:   []string{"www.foo.se", "www.bar.se"},
 		PrivateKey:         clientPriv,
 	}
 	return CreateCertificateTemplate(clientData), clientPriv

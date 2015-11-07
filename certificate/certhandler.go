@@ -56,8 +56,9 @@ func CreateCertificateTemplate(data Certificate) *x509.Certificate {
 			Organization:       []string{data.Organization},
 			OrganizationalUnit: []string{data.OrganizationalUnit},
 		},
-		NotBefore:             time.Now(),
-		NotAfter:              time.Now().AddDate(1, 0, 0),
+		NotBefore: time.Now(),
+		NotAfter:  time.Now().AddDate(1, 0, 0),
+		// TODO: calculate correct subject key
 		SubjectKeyId:          data.SubjectKey,
 		BasicConstraintsValid: true,
 		SignatureAlgorithm:    signatureAlgorithm(data.SignatureAlg, data.PrivateKey),
@@ -69,8 +70,14 @@ func CreateCertificateTemplate(data Certificate) *x509.Certificate {
 	if data.CommonName != "" {
 		cert.Subject.CommonName = data.CommonName
 	}
+
+	//TODO: handle alternative ip
+
 	if len(data.AlternativeNames) > 0 {
 		cert.DNSNames = data.AlternativeNames
+		if !isStringInList(data.CommonName, data.AlternativeNames) {
+			cert.DNSNames = append(cert.DNSNames, data.CommonName)
+		}
 	}
 	return cert
 }
@@ -115,6 +122,15 @@ func findRsaSignALg(algType string) x509.SignatureAlgorithm {
 	default:
 		return x509.SHA256WithRSA
 	}
+}
+
+func isStringInList(value string, list []string) bool {
+	for _, v := range list {
+		if v == value {
+			return true
+		}
+	}
+	return false
 }
 
 func CheckCertificate(dnsName string, caBytes, interCaBytes, clientBytes []byte) bool {
