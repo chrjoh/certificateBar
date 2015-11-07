@@ -27,8 +27,8 @@ Command line arguments:
 
 ## Config
 The structure of the config file is given bellow, certificates label conatins a list of certificate.
-(See config directory for a basic example setup.) Theexample below is a self signed certificate valis
-for domaoins `www.foo.se, www.dront.se, www.fro.se` using a 2048 RSA key
+(See config directory for a basic example setup.) The example below is a self signed certificate valid
+for domains `www.foo.se, www.dront.se, www.fro.se` and using a 2048 RSA key.
 ```
 certificates:
   - certificate:
