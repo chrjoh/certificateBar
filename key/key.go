@@ -33,6 +33,7 @@ func PublicKey(privateKey interface{}) interface{} {
 		return publicKey
 	}
 }
+
 func PublicKeyBitArray(pub interface{}) (publicKeyBytes []byte, err error) {
 	switch pub := pub.(type) {
 	case *rsa.PublicKey:
@@ -86,24 +87,6 @@ func WritePrivateKeyToPemFile(key interface{}, fileName string) {
 		ecKey, _ := x509.MarshalECPrivateKey(k)
 		pem.Encode(keyFile, &pem.Block{Type: "EC PRIVATE KEY", Bytes: ecKey})
 		fmt.Printf("wrote EC private key %s to file\n", fileName)
-	default:
-		log.Printf("Uknown key type: %v to write to file", key)
-	}
-}
-
-func WritePublicKeyToPemFile(key interface{}, fileName string) {
-	keyFile, err := os.Create(fileName)
-	defer keyFile.Close()
-	if err != nil {
-		log.Fatalf("Failed to open %s for writing public key: %s\n", fileName, err)
-	}
-	switch k := key.(type) {
-	case *rsa.PublicKey:
-		pubKey, _ := x509.MarshalPKIXPublicKey(k)
-		pem.Encode(keyFile, &pem.Block{Type: "RSA PUBLIC KEY", Bytes: pubKey})
-		log.Printf("wrote RSA private key %s to file\n", fileName)
-	case *ecdsa.PublicKey:
-		log.Printf("EC public key is stored then writting the private part\n")
 	default:
 		log.Printf("Uknown key type: %v to write to file", key)
 	}
