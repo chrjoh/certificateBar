@@ -91,7 +91,7 @@ certificates:
   - certificate: 
       id: clientecdsa
       parent: maincaecdsa
-      ca: true
+      ca: false 
       pkix:
         commonname: www.bar.se
         country: SE
