@@ -31,7 +31,6 @@ type Certificate struct {
 	AlternativeNames   []string
 	CA                 bool
 	PrivateKey         interface{}
-	SubjectKey         []byte
 	SignatureAlg       string
 }
 

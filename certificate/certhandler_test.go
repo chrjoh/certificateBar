@@ -87,7 +87,6 @@ func createCA() (*x509.Certificate, interface{}) {
 		Organization:       "test",
 		OrganizationalUnit: "WebCA",
 		CA:                 true,
-		SubjectKey:         []byte{1, 2, 3, 4, 5, 6},
 		PrivateKey:         caPriv,
 	}
 
@@ -101,7 +100,6 @@ func createInterCA() (*x509.Certificate, interface{}) {
 		Organization:       "test",
 		OrganizationalUnit: "WebInterCA",
 		CA:                 true,
-		SubjectKey:         []byte{1, 2, 3},
 		PrivateKey:         interCaPriv,
 	}
 	return CreateCertificateTemplate(interCaData), interCaPriv
@@ -114,7 +112,6 @@ func createClient() (*x509.Certificate, interface{}) {
 		Organization:       "test",
 		OrganizationalUnit: "Web",
 		CA:                 false,
-		SubjectKey:         []byte{1, 6},
 		CommonName:         "www.baz.se",
 		AlternativeNames:   []string{"www.foo.se", "www.bar.se"},
 		PrivateKey:         clientPriv,
