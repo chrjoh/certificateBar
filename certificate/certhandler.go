@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha1"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
@@ -12,6 +13,8 @@ import (
 	"math/big"
 	"os"
 	"time"
+
+	"github.com/chrjoh/certificateBar/key"
 )
 
 // view remote certificate
@@ -48,6 +51,8 @@ func Sign(cert *x509.Certificate, signer *x509.Certificate, certPubKey, signerPr
 func CreateCertificateTemplate(data Certificate) *x509.Certificate {
 	extKeyUsage := getExtKeyUsage(data.CA)
 	keyUsage := getKeyUsage(data.CA)
+	pub := key.PublicKey(data.PrivateKey)
+	subjectKeyId := keyIdentifier(pub)
 
 	cert := &x509.Certificate{
 		SerialNumber: big.NewInt(1),
@@ -56,10 +61,9 @@ func CreateCertificateTemplate(data Certificate) *x509.Certificate {
 			Organization:       []string{data.Organization},
 			OrganizationalUnit: []string{data.OrganizationalUnit},
 		},
-		NotBefore: time.Now(),
-		NotAfter:  time.Now().AddDate(1, 0, 0),
-		// TODO: calculate correct subject key
-		SubjectKeyId:          data.SubjectKey,
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().AddDate(1, 0, 0),
+		SubjectKeyId:          subjectKeyId,
 		BasicConstraintsValid: true,
 		SignatureAlgorithm:    signatureAlgorithm(data.SignatureAlg, data.PrivateKey),
 		IsCA:                  data.CA,
@@ -80,6 +84,13 @@ func CreateCertificateTemplate(data Certificate) *x509.Certificate {
 		}
 	}
 	return cert
+}
+
+func keyIdentifier(pub interface{}) []byte {
+	pbyte, _ := key.PublicKeyBitArray(pub)
+	hasher := sha1.New()
+	hasher.Write(pbyte)
+	return hasher.Sum(nil)
 }
 
 func signatureAlgorithm(algType string, privateKey interface{}) x509.SignatureAlgorithm {

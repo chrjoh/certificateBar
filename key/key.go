@@ -6,11 +6,20 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/asn1"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"log"
+	"math/big"
 	"os"
 )
+
+// rsaPublicKey reflects the ASN.1 structure of a PKCS#1 public key.
+type rsaPublicKey struct {
+	N *big.Int
+	E int
+}
 
 func PublicKey(privateKey interface{}) interface{} {
 	var publicKey interface{}
@@ -23,6 +32,20 @@ func PublicKey(privateKey interface{}) interface{} {
 		log.Fatal("Could not get public key\n")
 		return publicKey
 	}
+}
+func PublicKeyBitArray(pub interface{}) (publicKeyBytes []byte, err error) {
+	switch pub := pub.(type) {
+	case *rsa.PublicKey:
+		publicKeyBytes, err = asn1.Marshal(rsaPublicKey{
+			N: pub.N,
+			E: pub.E,
+		})
+	case *ecdsa.PublicKey:
+		publicKeyBytes = elliptic.Marshal(pub.Curve, pub.X, pub.Y)
+	default:
+		return nil, errors.New("x509: only RSA and ECDSA public keys supported")
+	}
+	return publicKeyBytes, nil
 }
 
 // TODO: use struct for this so that we do not have unused arguments

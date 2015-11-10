@@ -4,6 +4,8 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
+	"encoding/hex"
+	"encoding/pem"
 	"testing"
 
 	"github.com/chrjoh/certificateBar/key"
@@ -12,6 +14,26 @@ import (
 var (
 	OU = asn1.ObjectIdentifier{2, 5, 4, 11}
 )
+var pemPublicKey = `-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3VoPN9PKUjKFLMwOge6+
+wnDi8sbETGIx2FKXGgqtAKpzmem53kRGEQg8WeqRmp12wgp74TGpkEXsGae7RS1k
+enJCnma4fii+noGH7R0qKgHvPrI2Bwa9hzsH8tHxpyM3qrXslOmD45EH9SxIDUBJ
+FehNdaPbLP1gFyahKMsdfxFJLUvbUycuZSJ2ZnIgeVxwm4qbSvZInL9Iu4FzuPtg
+fINKcbbovy1qq4KvPIrXzhbY3PWDc6btxCf3SE0JdE1MCPThntB62/bLMSQ7xdDR
+FF53oIpvxe/SCOymfWq/LW849Ytv3Xwod0+wzAP8STXG4HSELS4UedPYeHJJJYcZ
++QIDAQAB
+-----END PUBLIC KEY-----
+`
+
+func TestSubjectKeyId(t *testing.T) {
+	block, _ := pem.Decode([]byte(pemPublicKey))
+	pub, _ := x509.ParsePKIXPublicKey(block.Bytes)
+	data := keyIdentifier(pub)
+	s := hex.EncodeToString(data)
+	if s != "103cb6fde54563169f15f5eecd414506410a77ad" {
+		t.Fatalf("Wrong subjectKeyId, got: %s, wanted: 103cb6fde54563169f15f5eecd414506410a77ad", s)
+	}
+}
 
 func TestCreateCertificateCahin(t *testing.T) {
 	ca, caPriv := createCA()
