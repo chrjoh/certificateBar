@@ -65,6 +65,7 @@ func (c *Certs) setupTemplates() {
 	for _, cert := range c.Certificates {
 		d := cert.CertConfig
 		template := certificate.Certificate{
+			Id:                 d.Id,
 			Country:            d.Pkix.Country,
 			Organization:       d.Pkix.Organization,
 			OrganizationalUnit: d.Pkix.OrganizationUnit,

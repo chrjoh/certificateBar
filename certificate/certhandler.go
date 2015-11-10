@@ -24,6 +24,7 @@ import (
 // openssl verify -verbose -CAfile ca.pem client.pem
 
 type Certificate struct {
+	Id                 string
 	Country            string
 	Organization       string
 	OrganizationalUnit string
@@ -54,7 +55,7 @@ func CreateCertificateTemplate(data Certificate) *x509.Certificate {
 	subjectKeyId := keyIdentifier(pub)
 
 	cert := &x509.Certificate{
-		SerialNumber: big.NewInt(1),
+		SerialNumber: new(big.Int).SetBytes([]byte(data.Id)),
 		Subject: pkix.Name{
 			Country:            []string{data.Country},
 			Organization:       []string{data.Organization},
