@@ -10,7 +10,8 @@ certificates:
         organizationunit: testcaecdsa
       keytype: P224
       hashalg: SHA256
-  - certificate: 
+      validto: 2020-01-01
+  - certificate:
       id: mainca
       parent: mainca
       ca: true

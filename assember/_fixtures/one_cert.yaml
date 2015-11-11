@@ -11,3 +11,5 @@ certificates:
       keytype: P224
       keylength: 1024
       hashalg: SHA2256
+      validfrom: 2015-11-01
+      validto: 2017-11-01

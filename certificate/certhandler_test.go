@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/pem"
 	"testing"
+	"time"
 
 	"github.com/chrjoh/certificateBar/key"
 )
@@ -89,6 +90,8 @@ func createCA() (*x509.Certificate, interface{}) {
 		OrganizationalUnit: "WebCA",
 		CA:                 true,
 		PrivateKey:         caPriv,
+		ValidFrom:          time.Now(),
+		ValidTo:            time.Now().AddDate(1, 0, 0),
 	}
 
 	return CreateCertificateTemplate(caData), caPriv
@@ -103,6 +106,8 @@ func createInterCA() (*x509.Certificate, interface{}) {
 		OrganizationalUnit: "WebInterCA",
 		CA:                 true,
 		PrivateKey:         interCaPriv,
+		ValidFrom:          time.Now(),
+		ValidTo:            time.Now().AddDate(1, 0, 0),
 	}
 	return CreateCertificateTemplate(interCaData), interCaPriv
 }
@@ -118,6 +123,8 @@ func createClient() (*x509.Certificate, interface{}) {
 		CommonName:         "www.baz.se",
 		AlternativeNames:   []string{"www.foo.se", "www.bar.se"},
 		PrivateKey:         clientPriv,
+		ValidFrom:          time.Now(),
+		ValidTo:            time.Now().AddDate(1, 0, 0),
 	}
 	return CreateCertificateTemplate(clientData), clientPriv
 }

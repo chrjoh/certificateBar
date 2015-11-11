@@ -48,7 +48,11 @@ func (c *Certs) setupSigner() {
 
 func (c *Certs) setupKeys() {
 	for _, cert := range c.Certificates {
-		cert.PrivateKey = key.GenerateKey(cert.CertConfig.KeyType, cert.CertConfig.KeyLength)
+		rsaBitsLenght := 2048
+		if cert.CertConfig.KeyLength > 0 {
+			rsaBitsLenght = cert.CertConfig.KeyLength
+		}
+		cert.PrivateKey = key.GenerateKey(cert.CertConfig.KeyType, rsaBitsLenght)
 	}
 }
 
@@ -74,6 +78,8 @@ func (c *Certs) setupTemplates() {
 			CA:                 d.CA,
 			PrivateKey:         cert.PrivateKey,
 			SignatureAlg:       d.HashAlg,
+			ValidFrom:          d.ValidFrom(),
+			ValidTo:            d.ValidTo(),
 		}
 		cert.CertTemplate = certificate.CreateCertificateTemplate(template)
 	}

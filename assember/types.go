@@ -1,6 +1,9 @@
 package assembler
 
-import "crypto/x509"
+import (
+	"crypto/x509"
+	"time"
+)
 
 type PkixData struct {
 	CommonName       string `yaml:"commonname"`
@@ -17,6 +20,8 @@ type CertData struct {
 	KeyLength int      `yaml:"keylength"`
 	HashAlg   string   `yaml:"hashalg"`
 	AltNames  []string `yaml:"altnames"`
+	DateFrom  string   `yaml:"validfrom"`
+	DateTo    string   `yaml:"validto"`
 	Pkix      PkixData `yaml:"pkix"`
 }
 
@@ -33,4 +38,20 @@ type Cert struct {
 type Certs struct {
 	Certificates []*Cert `yaml:"certificates"`
 	certSigners  map[string][]string
+}
+
+func (cd *CertData) ValidFrom() time.Time {
+	if cd.DateFrom == "" {
+		return time.Now()
+	}
+	tt, _ := time.Parse("2006-01-02", cd.DateFrom)
+	return tt
+}
+
+func (cd *CertData) ValidTo() time.Time {
+	if cd.DateTo == "" {
+		return time.Now().AddDate(1, 0, 0)
+	}
+	tt, _ := time.Parse("2006-01-02", cd.DateTo)
+	return tt
 }

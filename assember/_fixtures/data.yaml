@@ -10,7 +10,7 @@ certificates:
         organizationunit: testcaecdsa
       keytype: P224
       hashalg: SHA256
-  - certificate: 
+  - certificate:
       id: mainca
       parent: mainca
       ca: true
@@ -26,14 +26,8 @@ certificates:
       id: interca
       parent: mainca
       ca: true
-      pkix:
-        commonname: www.bar.se
-        country: SE
-        organization: test
-        organizationunit: testinterca
       keytype: RSA
       keylength: 1024
-      hashalg: SHA256
   - certificate: 
       id: interca2
       parent: mainca

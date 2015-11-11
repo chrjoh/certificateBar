@@ -33,6 +33,8 @@ type Certificate struct {
 	CA                 bool
 	PrivateKey         interface{}
 	SignatureAlg       string
+	ValidFrom          time.Time
+	ValidTo            time.Time
 }
 
 func Sign(cert *x509.Certificate, signer *x509.Certificate, certPubKey, signerPrivateKey interface{}) []byte {
@@ -61,8 +63,8 @@ func CreateCertificateTemplate(data Certificate) *x509.Certificate {
 			Organization:       []string{data.Organization},
 			OrganizationalUnit: []string{data.OrganizationalUnit},
 		},
-		NotBefore:             time.Now(),
-		NotAfter:              time.Now().AddDate(1, 0, 0),
+		NotBefore:             data.ValidFrom,
+		NotAfter:              data.ValidTo,
 		SubjectKeyId:          subjectKeyId,
 		BasicConstraintsValid: true,
 		SignatureAlgorithm:    signatureAlgorithm(data.SignatureAlg, data.PrivateKey),

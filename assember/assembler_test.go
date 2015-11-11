@@ -23,6 +23,9 @@ func TestReadConfigFile(t *testing.T) {
 	if c.Pkix.CommonName != "www.foo.se" {
 		t.Fatalf("wanted: www.foo.se, got:", c.Pkix.CommonName)
 	}
+	if c.ValidFrom().String() != "2015-11-01 00:00:00 +0000 UTC" {
+		t.Fatalf("wanted: 2015-11-01 00:00:00 +0000 UTC, got:", c.ValidFrom())
+	}
 }
 
 func TestKeySetup(t *testing.T) {
