@@ -62,7 +62,6 @@ certificates:
   - certificate: 
       id: client
       parent: interca
-      ca: false
       pkix:
         commonname: www.baz.se
         country: SE
@@ -77,7 +76,6 @@ certificates:
   - certificate: 
       id: client2
       parent: interca3
-      ca: false
       pkix:
         commonname: www.baz.se
         country: SE
@@ -92,7 +90,6 @@ certificates:
   - certificate: 
       id: clientecdsa
       parent: maincaecdsa
-      ca: false 
       pkix:
         commonname: www.bar.se
         country: SE

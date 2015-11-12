@@ -49,23 +49,23 @@ certificates:
       validfrom: 2010-01-01
       validto: 2020-01-01
 ```
-The options for each keywords is
+The options for each keywords is(* denote required values)
 
-| keyword | required | description | options |
-|---------|----------|-------------|---------|
-| id      |    *     | id used to identify the certificate and also the name used then saving the certificate and the private key to a file | string: mainca |
-| parent  |    *     | certificate to be used then signing, must be a valid id | string: mainca |
-| ca      |    *     | is this certificate used to sign other certificates| boolean: true or false |
-| keytype |    *     | key type to be used| string: RSA, P224, P256, P384, P512 |
-| commonname |       | the common name this certificate shoud have | string: www.foo.se |
-| country    |       | the country code to use | string:  SE |
-| organization |     | organisation name | string:  test |
-| organizationunit|  | organisation unit to be used | string: testca |
-| altnames        |  | list of alternative DNS names this certificate is valid for | string: valid dns names |
-| keylength       |  | key length, only used with RSA key, default is 2048 | int: 2048 |
-| hashalg         |  | which algorithm to be used for signature, default is SHA256 | string: SHA1, SHA256, SHA384, SHA512 |
-| validfrom       |  | Start date then the certificate is valid, default is now | string: 2010-01-01 |
-| validto         |  | End date then the certificate is not valid, default is 1 year | string: 2020-01-01 |
+| keyword | description | options |
+|---------|-------------|---------|
+| id *     | id used to identify the certificate and also the name used then saving the certificate and the private key to a file | string: mainca |
+| parent * | certificate to be used then signing, must be a valid id | string: mainca |
+| keytype * | key type to be used| string: RSA, P224, P256, P384, P512 |
+| ca      | is this certificate used to sign other certificates, default value is false| boolean: true or false |
+| commonname | the common name this certificate shoud have | string: www.foo.se |
+| country    | the country code to use | string:  SE |
+| organization | organisation name | string:  test |
+| organizationunit| organisation unit to be used | string: testca |
+| altnames        | list of alternative DNS names this certificate is valid for | string: valid dns names |
+| keylength       | key length, only used with RSA key, default is 2048 | int: 2048 |
+| hashalg         | which algorithm to be used for signature, default is SHA256 | string: SHA1, SHA256, SHA384, SHA512 |
+| validfrom       | Start date then the certificate is valid, default is now | string: 2010-01-01 |
+| validto         | End date then the certificate is not valid, default is 1 year | string: 2020-01-01 |
 ## License (MIT)
 
 Copyright (c) 2015 [Christer Johansson](http://blog.lodakai.com/)
