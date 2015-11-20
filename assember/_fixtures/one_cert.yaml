@@ -13,3 +13,8 @@ certificates:
       hashalg: SHA2256
       validfrom: 2015-11-01
       validto: 2017-11-01
+      usage:
+        - certsign
+        - crlsign
+        - serverauth
+        - clientauth

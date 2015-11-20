@@ -23,6 +23,7 @@ type CertData struct {
 	DateFrom  string   `yaml:"validfrom"`
 	DateTo    string   `yaml:"validto"`
 	Pkix      PkixData `yaml:"pkix"`
+	Usage     []string `yaml:"usage"`
 }
 
 type Cert struct {

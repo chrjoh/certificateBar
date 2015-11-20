@@ -28,6 +28,19 @@ func TestReadConfigFile(t *testing.T) {
 	}
 }
 
+func TestUsage(t *testing.T) {
+	test := marshalCertData("_fixtures/one_cert.yaml", t)
+	c := test.Certificates[0].CertConfig
+	if len(c.Usage) != 4 {
+		t.Fatal("failed to find any certificate usage")
+	}
+	for _, u := range c.Usage {
+		if !containsAny(u, "certsign", "crlsign", "serverauth", "clientauth") {
+			t.Fatalf("Failed to find '%v' in the usage list", u)
+		}
+	}
+}
+
 func TestKeySetup(t *testing.T) {
 	test := marshalCertData("_fixtures/data.yaml", t)
 	test.setupKeys()
@@ -109,4 +122,14 @@ func marshalCertData(filename string, t *testing.T) Certs {
 		t.Fatalf("error: %v", err)
 	}
 	return test
+}
+
+func containsAny(s string, valid ...string) bool {
+	result := make(map[string]struct{})
+	for _, v := range valid {
+		result[v] = struct{}{}
+	}
+	_, ok := result[s]
+
+	return ok
 }
