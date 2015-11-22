@@ -1,0 +1,30 @@
+certificates:
+  - certificate:
+      id: mainca
+      parent: mainca
+      ca: true
+      pkix:
+        commonname: www.foo.se
+        country: SE
+        organization: test
+        organizationunit: testca
+      keytype: RSA
+      keylength: 1024
+      hashalg: SHA256
+      usage:
+        - certsign
+  - certificate: 
+      id: client
+      parent: mainca
+      ca: false
+      pkix:
+        commonname: www.bar.se
+        country: SE
+        organization: test
+        organizationunit: test
+      keytype: RSA
+      keylength: 1024
+      hashalg: SHA256
+      usage:
+        - clientauth
+        - serverauth

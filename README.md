@@ -48,6 +48,8 @@ certificates:
       hashalg: SHA256
       validfrom: 2010-01-01
       validto: 2020-01-01
+      usage:
+        - certsign
 ```
 The options for each keywords is(* denote required values)
 
@@ -66,6 +68,22 @@ The options for each keywords is(* denote required values)
 | hashalg         | which algorithm to be used for signature, default is SHA256 | string: SHA1, SHA256, SHA384, SHA512 |
 | validfrom       | Start date then the certificate is valid, default is now | string: 2010-01-01 |
 | validto         | End date then the certificate is not valid, default is 1 year | string: 2020-01-01 |
+| usage           | Key usage to ad to the certificates, see list below for options | list of strings|
+
+### Key usage
+If empty, if CA is true keys to sign certificates and crl lista are added, otherwise client and
+server authentications are added.
+
+| keyword      | description |
+|--------------|-------------|
+| certsign     | allowed to sign certificates|
+| crlsign      | allowed to sign crl|
+| encipherment | allowed to enciphering private or secret keys|
+| clientauth   | allowed to authenticate as client|
+| serverauth   | allowed ot be used for server authenthication|
+| signature    | allowed to perfom digital signature|
+
+
 ## License (MIT)
 
 Copyright (c) 2015 [Christer Johansson](http://blog.lodakai.com/)

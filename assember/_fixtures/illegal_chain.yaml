@@ -1,0 +1,27 @@
+certificates:
+  - certificate:
+      id: mainca
+      parent: mainca
+      ca: true
+      pkix:
+        commonname: www.invalidca.se
+        country: SE
+        organization: test
+        organizationunit: testca
+      keytype: RSA
+      keylength: 1024
+      hashalg: SHA256
+      usage:
+        - crlsign
+  - certificate: 
+      id: client
+      parent: mainca
+      ca: false
+      pkix:
+        commonname: www.bar.se
+        country: SE
+        organization: test
+        organizationunit: testinterca
+      keytype: RSA
+      keylength: 1024
+      hashalg: SHA256

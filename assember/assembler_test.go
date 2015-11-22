@@ -79,6 +79,20 @@ func TestSignAll(t *testing.T) {
 	}
 }
 
+func TestCreateInvalidChain(t *testing.T) {
+	test := marshalCertData("_fixtures/illegal_chain.yaml", t)
+	test.setupKeys()
+	test.setupTemplates()
+	test.setupSigner()
+	test.signAll()
+	client, _ := test.findByid("client")
+	ca, _ := test.findByid(client.Signers[0])
+	result := certificate.CheckCertificate("", ca.CertBytes, nil, client.CertBytes)
+	if result {
+		t.Fatal("Failed to create certificate chanin vid invalid signer")
+	}
+}
+
 func TestInitialSigner(t *testing.T) {
 	test := marshalCertData("_fixtures/data.yaml", t)
 	test.setupKeys()

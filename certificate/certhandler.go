@@ -30,6 +30,7 @@ type Certificate struct {
 	OrganizationalUnit string
 	CommonName         string
 	AlternativeNames   []string
+	Usage              []string
 	CA                 bool
 	PrivateKey         interface{}
 	SignatureAlg       string
@@ -51,11 +52,9 @@ func Sign(cert *x509.Certificate, signer *x509.Certificate, certPubKey, signerPr
 //the common name value and seek a match in the SAN list.
 //This is why the Cert always repeats the common name as the first SAN in the certificate.
 func CreateCertificateTemplate(data Certificate) *x509.Certificate {
-	extKeyUsage := getExtKeyUsage(data.CA)
-	keyUsage := getKeyUsage(data.CA)
 	pub := key.PublicKey(data.PrivateKey)
 	subjectKeyId := keyIdentifier(pub)
-
+	keyUsage, extKeyUsage := getUsage(data.Usage, data.CA)
 	cert := &x509.Certificate{
 		SerialNumber: new(big.Int).SetBytes([]byte(data.Id)),
 		Subject: pkix.Name{
@@ -163,20 +162,73 @@ func CheckCertificate(dnsName string, caBytes, interCaBytes, clientBytes []byte)
 	clientCert, _ := x509.ParseCertificate(clientBytes)
 	_, certErr := clientCert.Verify(opts)
 	if certErr != nil {
+		log.Printf("Could not verify certificate: %v\n", clientCert.Subject.CommonName)
 		log.Println(certErr)
-		os.Exit(1)
+		return false
 	}
 	log.Println("Certificates verify: OK")
 	return true
 }
-func getKeyUsage(ca bool) x509.KeyUsage {
+
+/* TODO to be added
+# key usage
+KeyUsageDigitalSignature
+KeyUsageContentCommitment
+KeyUsageKeyEncipherment
+KeyUsageDataEncipherment
+KeyUsageKeyAgreement
+KeyUsageCertSign
+KeyUsageCRLSign
+KeyUsageEncipherOnly
+KeyUsageDecipherOnly
+
+# ext key usage
+ExtKeyUsageAny
+ExtKeyUsageServerAuth
+ExtKeyUsageClientAuth
+ExtKeyUsageCodeSigning
+ExtKeyUsageEmailProtection
+ExtKeyUsageIPSECEndSystem
+ExtKeyUsageIPSECTunnel
+ExtKeyUsageIPSECUser
+ExtKeyUsageTimeStamping
+ExtKeyUsageOCSPSigning
+ExtKeyUsageMicrosoftServerGatedCrypto
+ExtKeyUsageNetscapeServerGatedCrypto
+*/
+func getUsage(usage []string, ca bool) (x509.KeyUsage, []x509.ExtKeyUsage) {
+	if len(usage) == 0 {
+		return getDefaultKeyUsage(ca), getDefaultExtKeyUsage(ca)
+	}
+	var keyUsage x509.KeyUsage
+	var extKeyUsage []x509.ExtKeyUsage
+	for _, key := range usage {
+		switch key {
+		case "crlsign":
+			keyUsage |= x509.KeyUsageCRLSign
+		case "certsign":
+			keyUsage |= x509.KeyUsageCertSign
+		case "encipherment":
+			keyUsage |= x509.KeyUsageKeyEncipherment
+		case "signature":
+			keyUsage |= x509.KeyUsageDigitalSignature
+		case "clientauth":
+			extKeyUsage = append(extKeyUsage, x509.ExtKeyUsageClientAuth)
+		case "serverauth":
+			extKeyUsage = append(extKeyUsage, x509.ExtKeyUsageServerAuth)
+		}
+	}
+	return keyUsage, extKeyUsage
+}
+
+func getDefaultKeyUsage(ca bool) x509.KeyUsage {
 	if ca {
 		return x509.KeyUsageCRLSign | x509.KeyUsageCertSign
 	}
 	return x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature
 }
 
-func getExtKeyUsage(ca bool) []x509.ExtKeyUsage {
+func getDefaultExtKeyUsage(ca bool) []x509.ExtKeyUsage {
 	if ca {
 		return []x509.ExtKeyUsage{}
 	}

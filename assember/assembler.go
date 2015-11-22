@@ -80,6 +80,7 @@ func (c *Certs) setupTemplates() {
 			SignatureAlg:       d.HashAlg,
 			ValidFrom:          d.ValidFrom(),
 			ValidTo:            d.ValidTo(),
+			Usage:              d.Usage,
 		}
 		cert.CertTemplate = certificate.CreateCertificateTemplate(template)
 	}
