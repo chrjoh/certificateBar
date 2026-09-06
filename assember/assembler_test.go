@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/chrjoh/certificateBar/certificate"
+	"github.com/chrjoh/certificateBar/v2/certificate"
 
 	"gopkg.in/yaml.v2"
 )

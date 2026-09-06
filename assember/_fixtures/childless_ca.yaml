@@ -1,0 +1,25 @@
+certificates:
+  - certificate:
+      id: mainca
+      parent: mainca
+      ca: true
+      pkix:
+        commonname: www.foo.se
+        country: SE
+        organization: test
+        organizationunit: testca
+      keytype: RSA
+      keylength: 1024
+      hashalg: SHA256
+  - certificate:
+      id: lonelyca
+      parent: mainca
+      ca: true
+      pkix:
+        commonname: www.lonely.se
+        country: SE
+        organization: test
+        organizationunit: testlonely
+      keytype: RSA
+      keylength: 1024
+      hashalg: SHA256

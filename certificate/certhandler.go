@@ -14,7 +14,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/chrjoh/certificateBar/key"
+	"github.com/chrjoh/certificateBar/v2/key"
 )
 
 // view remote certificate
@@ -235,6 +235,20 @@ func getDefaultExtKeyUsage(ca bool) []x509.ExtKeyUsage {
 		return []x509.ExtKeyUsage{}
 	}
 	return []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth}
+}
+
+// ReadPemFromFile reads back a certificate written by WritePemToFile, the der
+// bytes are kept by the parsed certificate in its Raw field.
+func ReadPemFromFile(fileName string) (*x509.Certificate, error) {
+	data, err := os.ReadFile(fileName)
+	if err != nil {
+		return nil, fmt.Errorf("could not read certificate file %s: %v", fileName, err)
+	}
+	block, _ := pem.Decode(data)
+	if block == nil || block.Type != "CERTIFICATE" {
+		return nil, fmt.Errorf("no certificate pem data found in file: %s", fileName)
+	}
+	return x509.ParseCertificate(block.Bytes)
 }
 
 func WritePemToFile(b []byte, fileName string) {

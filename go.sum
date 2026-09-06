@@ -1,5 +1,3 @@
-github.com/chrjoh/certificateBar v0.0.0-20151122195015-3c86fcff64fb h1:EyjxJ8BbpPN8cnF6Bzuwa00LAH4dmXXAqgnyVUWwW78=
-github.com/chrjoh/certificateBar v0.0.0-20151122195015-3c86fcff64fb/go.mod h1:+/BTRW2TrBBZ/JjwVAWgnOQtEmXloF8pWA2LJbY1zKU=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+SDo693bJlVdllGtEeKM=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/yaml.v2 v2.4.0 h1:D8xgwECY7CYvx+Y2n4sBz93Jn9JRvxdiyyo8CTfuKaY=

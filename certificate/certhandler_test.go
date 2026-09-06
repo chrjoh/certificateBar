@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/chrjoh/certificateBar/key"
+	"github.com/chrjoh/certificateBar/v2/key"
 )
 
 var (

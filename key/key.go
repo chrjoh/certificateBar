@@ -91,3 +91,26 @@ func WritePrivateKeyToPemFile(key interface{}, fileName string) {
 		log.Printf("Uknown key type: %v to write to file", key)
 	}
 }
+
+// ReadPrivateKeyFromPemFile reads back a key written by WritePrivateKeyToPemFile
+// so that an existing certificate can keep signing with the very same key.
+func ReadPrivateKeyFromPemFile(fileName string) (interface{}, error) {
+	data, err := os.ReadFile(fileName)
+	if err != nil {
+		return nil, fmt.Errorf("could not read private key file %s: %v", fileName, err)
+	}
+	block, _ := pem.Decode(data)
+	if block == nil {
+		return nil, fmt.Errorf("no pem data found in private key file: %s", fileName)
+	}
+	switch block.Type {
+	case "RSA PRIVATE KEY":
+		return x509.ParsePKCS1PrivateKey(block.Bytes)
+	case "EC PRIVATE KEY":
+		return x509.ParseECPrivateKey(block.Bytes)
+	case "PRIVATE KEY":
+		return x509.ParsePKCS8PrivateKey(block.Bytes)
+	default:
+		return nil, fmt.Errorf("unsupported private key type %v in file: %s", block.Type, fileName)
+	}
+}

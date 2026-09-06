@@ -26,6 +26,8 @@ certificates:
       id: interca
       parent: mainca
       ca: true
+      pkix:
+        commonname: www.inter.se
       keytype: RSA
       keylength: 1024
   - certificate: 

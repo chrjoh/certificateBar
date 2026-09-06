@@ -30,6 +30,7 @@ type Cert struct {
 	CertConfig   CertData `yaml:"certificate"`
 	signed       bool
 	toBeUsed     bool
+	pinned       bool
 	PrivateKey   interface{}
 	CertTemplate *x509.Certificate
 	CertBytes    []byte
@@ -39,6 +40,24 @@ type Cert struct {
 type Certs struct {
 	Certificates []*Cert `yaml:"certificates"`
 	certSigners  map[string][]string
+	// dir is where certificate and key files are read from and written to.
+	dir string
+	// renewFrom is the id of the certificate loaded from disk and used as
+	// signer, empty when the whole tree is generated from scratch.
+	renewFrom string
+	// renewDays overrides the validity in the config file when > 0.
+	renewDays int
+}
+
+// certFileName and keyFileName are the single naming rule for the files on
+// disk, used both then writing a new certificate and then reading an existing
+// one back for a renew.
+func certFileName(id string) string {
+	return id + "_crt.pem"
+}
+
+func keyFileName(id string) string {
+	return id + "_key.pem"
 }
 
 func (cd *CertData) ValidFrom() time.Time {
