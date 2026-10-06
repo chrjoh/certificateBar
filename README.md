@@ -14,17 +14,68 @@ http://eprint.iacr.org/2015/1018.pdf
 ## Installation
 
 ```bash
-$ go get -u github.com/chrjoh/certificatebar
+$ go install github.com/chrjoh/certificateBar/v2@latest
 ```
 
 ## Usage
 ```bash
 $ certificatebar --help
 
+Usage:
+
+  certificatebar [flags]                         create all certificates in the config file
+  certificatebar [flags] renew -p <parent> ...   redo the certificates signed by <parent>
+
 Command line arguments:
 
-  -i configuration file to be used
+  -d string
+        Directory holding the certificate and key files (default ".")
+  -i string
+        Config file defining the certificates (default "./config/data.yaml")
+
+renew arguments:
+
+  -d string
+        Directory holding the certificate and key files (default ".")
+  -days int
+        Make the renewed certificates valid from now and this many days, 0 uses the dates in the config file
+  -i string
+        Config file defining the certificates (default "./config/data.yaml")
+  -p string
+        Id or commonname of the parent certificate whose certificates are renewed
 ```
+
+## Renew
+`renew` redoes everything below one certificate in the tree, using the same config file that
+created it. The parent named with `-p` is read back from disk, key and all, and is used to sign
+the new certificates, so the chain above it keeps working and does not have to be rolled out again.
+Every certificate below the parent gets a new key and a new certificate, everything outside that
+subtree is left alone.
+
+```bash
+# create the tree, keep the certificates next to the config file
+$ certificatebar -i config/data.yaml -d config
+
+# a year later, give the certificates signed by interca 90 new days
+$ certificatebar renew -i config/data.yaml -d config -p interca -days 90
+Certificate: interca, reused as signer, left untouched on disk
+wrote certificate config/client_crt.pem and key config/client_key.pem to file
+Certificate: client, has certificate chain: mainca, interca
+
+$ openssl verify -CAfile config/mainca_crt.pem -untrusted config/interca_crt.pem config/client_crt.pem
+config/client_crt.pem: OK
+```
+
+The parent is given by `id`, or by `commonname` if that name is used by only one certificate.
+Without `-days` the renewed certificates get the `validfrom`/`validto` from the config file, which
+is only a renewal if those are left out (default is now .. one year). A renewed certificate never
+outlives its signer, its end is cut to the end of the signer. Only the parent and the certificates
+below it are read from the config, an error elsewhere in the file does not stop a renew.
+
+A parent that is not a `ca`, that has no certificates under it, that is expired or not yet valid,
+whose key is not RSA or ECDSA, or whose key file does not belong to its certificate, is refused
+before anything is written. The key and certificate of every renewed certificate are written to
+temporary files first and only then replace the old pair, keys with mode 0600.
 
 ## Config
 The structure of the config file is given bellow, certificates label conatins a list of certificate.

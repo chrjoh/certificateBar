@@ -73,21 +73,41 @@ func GenerateKey(keyType string, rsaBitLength int) interface{} {
 	return privateKey
 }
 
-func WritePrivateKeyToPemFile(key interface{}, fileName string) {
-	keyFile, err := os.Create(fileName)
-	defer keyFile.Close()
-	if err != nil {
-		log.Fatalf("Failed to open %s for writing private key: %s\n", fileName, err)
-	}
+// EncodePrivateKeyPem returns the private key in pem form.
+func EncodePrivateKeyPem(key interface{}) ([]byte, error) {
 	switch k := key.(type) {
 	case *rsa.PrivateKey:
-		pem.Encode(keyFile, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(k)})
-		fmt.Printf("wrote RSA private key %s to file\n", fileName)
+		return pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(k)}), nil
 	case *ecdsa.PrivateKey:
-		ecKey, _ := x509.MarshalECPrivateKey(k)
-		pem.Encode(keyFile, &pem.Block{Type: "EC PRIVATE KEY", Bytes: ecKey})
-		fmt.Printf("wrote EC private key %s to file\n", fileName)
+		ecKey, err := x509.MarshalECPrivateKey(k)
+		if err != nil {
+			return nil, err
+		}
+		return pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: ecKey}), nil
 	default:
-		log.Printf("Uknown key type: %v to write to file", key)
+		return nil, fmt.Errorf("unknown key type %T to write to file", key)
+	}
+}
+
+// ReadPrivateKeyFromPemFile reads back a key written in the form of EncodePrivateKeyPem
+// so that an existing certificate can keep signing with the very same key.
+func ReadPrivateKeyFromPemFile(fileName string) (interface{}, error) {
+	data, err := os.ReadFile(fileName)
+	if err != nil {
+		return nil, fmt.Errorf("could not read private key file %s: %v", fileName, err)
+	}
+	block, _ := pem.Decode(data)
+	if block == nil {
+		return nil, fmt.Errorf("no pem data found in private key file: %s", fileName)
+	}
+	switch block.Type {
+	case "RSA PRIVATE KEY":
+		return x509.ParsePKCS1PrivateKey(block.Bytes)
+	case "EC PRIVATE KEY":
+		return x509.ParseECPrivateKey(block.Bytes)
+	case "PRIVATE KEY":
+		return x509.ParsePKCS8PrivateKey(block.Bytes)
+	default:
+		return nil, fmt.Errorf("unsupported private key type %v in file: %s", block.Type, fileName)
 	}
 }
