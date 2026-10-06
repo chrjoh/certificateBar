@@ -42,9 +42,6 @@ type Certs struct {
 	certSigners  map[string][]string
 	// dir is where certificate and key files are read from and written to.
 	dir string
-	// renewFrom is the id of the certificate loaded from disk and used as
-	// signer, empty when the whole tree is generated from scratch.
-	renewFrom string
 	// renewDays overrides the validity in the config file when > 0.
 	renewDays int
 }

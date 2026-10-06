@@ -7,8 +7,6 @@ import (
 	"testing"
 
 	"github.com/chrjoh/certificateBar/v2/certificate"
-
-	"gopkg.in/yaml.v2"
 )
 
 func TestReadConfigFile(t *testing.T) {
@@ -129,13 +127,8 @@ func TestFindById(t *testing.T) {
 }
 
 func marshalCertData(filename string, t *testing.T) Certs {
-	test := Certs{}
-	data := readFile(filename)
-	err := yaml.Unmarshal(data, &test)
-	if err != nil {
-		t.Fatalf("error: %v", err)
-	}
-	return test
+	t.Helper()
+	return parse(filename, "")
 }
 
 func containsAny(s string, valid ...string) bool {

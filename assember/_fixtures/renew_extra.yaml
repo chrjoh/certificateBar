@@ -1,0 +1,48 @@
+# data.yaml plus two entries that only matter for a renew: grandchild sits
+# below the non-ca client inside the interca subtree and can never be signed,
+# broken has an unknown keytype outside that subtree.
+certificates:
+  - certificate:
+      id: mainca
+      parent: mainca
+      ca: true
+      pkix:
+        commonname: www.foo.se
+        country: SE
+        organization: test
+        organizationunit: testca
+      keytype: RSA
+      keylength: 1024
+      hashalg: SHA256
+  - certificate:
+      id: interca
+      parent: mainca
+      ca: true
+      pkix:
+        commonname: www.inter.se
+      keytype: RSA
+      keylength: 1024
+  - certificate:
+      id: client
+      parent: interca
+      pkix:
+        commonname: www.baz.se
+        country: SE
+        organization: test
+        organizationunit: testweb
+      keytype: RSA
+      keylength: 1024
+      hashalg: SHA256
+  - certificate:
+      id: grandchild
+      parent: client
+      pkix:
+        commonname: www.grand.se
+      keytype: RSA
+      keylength: 1024
+  - certificate:
+      id: broken
+      parent: mainca
+      pkix:
+        commonname: www.broken.se
+      keytype: NOSUCHKEY

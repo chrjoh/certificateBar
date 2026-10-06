@@ -56,7 +56,7 @@ func CreateCertificateTemplate(data Certificate) *x509.Certificate {
 	subjectKeyId := keyIdentifier(pub)
 	keyUsage, extKeyUsage := getUsage(data.Usage, data.CA)
 	cert := &x509.Certificate{
-		SerialNumber: new(big.Int).SetBytes([]byte(data.Id)),
+		SerialNumber: serialNumber(),
 		Subject: pkix.Name{
 			Country:            []string{data.Country},
 			Organization:       []string{data.Organization},
@@ -66,7 +66,7 @@ func CreateCertificateTemplate(data Certificate) *x509.Certificate {
 		NotAfter:              data.ValidTo,
 		SubjectKeyId:          subjectKeyId,
 		BasicConstraintsValid: true,
-		SignatureAlgorithm:    signatureAlgorithm(data.SignatureAlg, data.PrivateKey),
+		SignatureAlgorithm:    SignatureAlgorithm(data.SignatureAlg, data.PrivateKey),
 		IsCA:                  data.CA,
 		ExtKeyUsage:           extKeyUsage,
 		KeyUsage:              keyUsage,
@@ -87,6 +87,17 @@ func CreateCertificateTemplate(data Certificate) *x509.Certificate {
 	return cert
 }
 
+// serialNumber is a random 128 bit number, so that two certificates from the
+// same issuer never share a serial (RFC 5280 4.1.2.2), not even when a renew
+// signs the same id again with the same issuer.
+func serialNumber() *big.Int {
+	serial, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
+	if err != nil {
+		log.Fatalf("Failed to generate serial number: %v", err)
+	}
+	return serial
+}
+
 func keyIdentifier(pub interface{}) []byte {
 	pbyte, _ := key.PublicKeyBitArray(pub)
 	hasher := sha1.New()
@@ -94,7 +105,9 @@ func keyIdentifier(pub interface{}) []byte {
 	return hasher.Sum(nil)
 }
 
-func signatureAlgorithm(algType string, privateKey interface{}) x509.SignatureAlgorithm {
+// SignatureAlgorithm picks the algorithm a signature made by privateKey uses,
+// with the hash given by algType.
+func SignatureAlgorithm(algType string, privateKey interface{}) x509.SignatureAlgorithm {
 	switch privateKey.(type) {
 	case *rsa.PrivateKey:
 		return findRsaSignALg(algType)
@@ -251,12 +264,7 @@ func ReadPemFromFile(fileName string) (*x509.Certificate, error) {
 	return x509.ParseCertificate(block.Bytes)
 }
 
-func WritePemToFile(b []byte, fileName string) {
-	certFile, err := os.Create(fileName)
-	defer certFile.Close()
-	if err != nil {
-		log.Fatalf("Failed to open %s for writing cerificate: %s\n", fileName, err)
-	}
-	pem.Encode(certFile, &pem.Block{Type: "CERTIFICATE", Bytes: b})
-	fmt.Printf("wrote certificate %s to file\n", fileName)
+// EncodePem returns the der bytes of a certificate in pem form.
+func EncodePem(b []byte) []byte {
+	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: b})
 }

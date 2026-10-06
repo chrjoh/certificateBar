@@ -3,9 +3,9 @@ package certificatebar
 import assembler "github.com/chrjoh/certificateBar/v2/assember"
 
 // Handler creates every certificate in the config file.
-func Handler(config, dir string) {
+func Handler(config, dir string) error {
 	certs := assembler.Generate(config, dir)
-	certs.Output()
+	return certs.Output()
 }
 
 // Renew redoes the certificates signed by signerName, keeping that signer and
@@ -15,6 +15,5 @@ func Renew(config, dir, signerName string, days int) error {
 	if err != nil {
 		return err
 	}
-	certs.Output()
-	return nil
+	return certs.Output()
 }
